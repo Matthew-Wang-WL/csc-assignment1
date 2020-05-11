@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="Scripts/jquery-3.5.1.min.js"></script>
+    <style>
+        #refresh_btn {
+            width:200px;
+            height:30px;
+        }
+    </style>
+</head>
+<body>
+    <span id="ct"></span>
+    <button id="refresh_btn">Refresh</button><br/>
+
+    <script language="javascript">
+        $(document).ready(function () {
+            display_ct();
+
+            // Refresh the time when refresh button is clicked
+            $('#refresh_btn').on('click', function () {
+                var refresh = 500; // Refresh rate in milli seconds
+                mytime = setTimeout('display_ct()', refresh);
+            });
+
+        })
+
+        // Displays client-side time
+        function display_ct() {
+            var x = new Date();
+            // changing the display to UTC string
+            var x1 = x.toUTCString();
+            //formatting the display
+            $('#ct').html(x1);
+            $('#ct').css('font-size', '20px')
+            //set the fontcolor to '#0030c0';
+            $('#ct').css('color', '#0030c0')
+
+            getWeather(x1);
+        }
+
+        function getWeather(data) {
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/air-temperature',
+                contentType: 'application/json; charset=utf-8',
+                data: data
+            }).done(function (data) {
+                alert("it works");
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR.responseText);
+            });
+        }
+
+    </script>
+
+</body>
+</html>
