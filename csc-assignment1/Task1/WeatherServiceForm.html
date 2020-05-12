@@ -1,0 +1,151 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="Scripts/jquery-3.5.1.min.js"></script>
+    <style>
+        #refresh_btn {
+            width:200px;
+            height:30px;
+        }
+    </style>
+</head>
+<body>
+    <span id="ct"></span><br />
+    <span id="loc"></span><br />
+    <button id="refresh_btn">Refresh</button><br/><br/>
+    <span id="temp"></span>
+
+    <script language="javascript">
+        $(document).ready(function () {
+            display_ct_loc();
+
+            // Refresh the time when refresh button is clicked
+            $('#refresh_btn').on('click', function () {
+                var refresh = 500; // Refresh rate in milli seconds
+                mytime = setTimeout('display_ct()', refresh);
+            });
+
+        })
+
+        // Displays client-side time
+        function display_ct_loc() {
+            var x = new Date();
+            // changing the display to UTC string
+            var x1 = x.toUTCString();
+            //formatting the display
+            $('#ct').html(x1);
+            $('#ct').css('font-size', '20px')
+            //set the fontcolor to '#0030c0';
+            $('#ct').css('color', '#0030c0')
+
+            getLocation(x1, getWeather);
+        }
+
+        // Get latitude and longitude of current location
+        function getLocation(dt, callback) {
+            var posArr = [];
+            var lat, lon;
+
+            if (navigator.geolocation) {
+                // Get latitude and longitude of current position
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    lat = position.coords.latitude;
+                    lon = position.coords.longitude;
+                    posArr.push(lat, lon);
+                    callback(dt, posArr);
+                });
+            }
+            else {
+                // Set default position to Scotts Road, Singapore
+                lat = 1.31055;
+                lon = 103.8365;
+                posArr.push(lat, lon);
+                callback(x1, posArr)
+            }            
+        }
+
+        // Find the station closest to the user's location
+        function getNearestStation(posArr, stations) {
+            var myStation;
+
+            for (i = 0; i < stations.length; i++) {
+                if (i == 0) {
+                    myStation = stations[0];
+                } else {
+                    // Get the latitude and longitude difference of the current location and the current Station
+                    var latDiff, lonDiff, newLatDiff, newLonDiff
+
+                    // Get the latitude and longitude difference of the current location and the selected Station
+                    latDiff = Math.abs(myStation.location.latitude - posArr[0]);
+                    lonDiff = Math.abs(myStation.location.longitude - posArr[1]);
+                    newLatDiff = Math.abs(stations[i].location.latitude - posArr[0]);
+                    newLonDiff = Math.abs(stations[i].location.longitude - posArr[1]);
+
+                    // If latitude and longitude difference is less than the selected station (it means its nearer),
+                    // change the selected station to the current station.
+                    if (newLatDiff < latDiff && newLonDiff < lonDiff) {
+                        myStation = stations[i];
+                    }
+                }
+            }
+
+            return myStation;
+        }
+
+        // Get weather reading from selected station
+        function getStationReading(station, readings) {
+            var reading;
+            for (i = 0; i < readings.length; i++) {
+                if (readings[i].station_id == station.id) {
+                    reading = readings[i].value;
+                    break;
+                } else {
+                    reading = 0;
+                }
+            }
+            return reading;
+        }
+
+
+        // Gets current air temperature, rainfall, relative humidity, wind direction and wind speed across Singapore.
+        function getWeather(data, posArr) {
+            // Gets current air temperature
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/air-temperature',
+                contentType: 'application/json; charset=utf-8',
+                data: data
+            }).done(function (data) {
+                // Get nearest station
+                var stations = data.metadata.stations;
+                myStation = getNearestStation(posArr, stations);
+                
+                // Get temperature unit
+                var temp_unit;
+                if (data.metadata.reading_unit === "deg C") {
+                    // degree celsius symbol
+                    temp_unit = "&#x2103;";
+                } else {
+                    // degree fahrenheit symbol
+                    temp_unit = "&#x2109;";
+                }
+
+                // Get temperature
+                var readings = data.items[0].readings;
+                var tempVal = getStationReading(myStation, readings);
+
+                // Display temperature
+                $('#temp').html('Temperature: ' + tempVal.toString().concat(temp_unit));
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR.responseText);
+            });
+
+        }
+
+    </script>
+
+</body>
+</html>
