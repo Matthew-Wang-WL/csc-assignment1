@@ -120,15 +120,15 @@
         var requestCallback;
 
         $(document).ready(function () {
-            $('#refresh_btn_enabled').addClass('hide');
-            display_ct_loc();
-
             // Get a new weather reading
-            $('#refresh_btn').on('click', function () {
+            $('#refresh_btn_enabled').on('click', function () {
                 $('#refresh_btn_enabled').addClass('hide');
                 $('#refresh_btn_disabled').removeClass('hide');
                 display_ct_loc();
             });
+
+            display_ct_loc();
+            $('#refresh_btn_enabled').addClass('hide');
         })
 
         // Constructor function to detect the completion of all ajax web service calls.
