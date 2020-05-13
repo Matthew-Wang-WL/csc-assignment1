@@ -5,29 +5,155 @@
     <title></title>
     <script src="Scripts/jquery-3.5.1.min.js"></script>
     <style>
-        #refresh_btn {
-            width:200px;
-            height:30px;
+        @font-face {
+            font-family: 'Rajdhani-Bold';
+            src: url('fonts/Rajdhani-Bold.ttf') format('truetype');
+        }
+
+        body {
+            font-family: Verdana;
+        }
+
+        #refresh_btn_enabled {
+            width: 200px;
+            height: 40px;
+            background: #7D7DFF;
+            color: #FFFFFF;
+        }
+
+        #refresh_btn_disabled {
+            width: 200px;
+            height: 40px;
+            background: #FBFBFE;
+            color: #BCBCBC;
+            display: flex;
+            margin: auto;
+        }
+        #refresh_btn_disabled p {
+            margin: auto;
+            text-align: center;
+        }
+
+        #buttons {
+            padding-bottom: 1em;
+        }
+
+        #display {
+            width: 200px;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: #FCFCFC;
+            border-radius: 5px;
+            box-shadow: #999999 0px 0px 10px 2px;
+        }
+
+        #loader {
+            margin-top: -2.3em;
+        }
+
+        #loader_text {
+            text-align: center;
+            display: block;
+            margin-top: -1.8em;
+            color: #1d3f72;
+            font-family: Rajdhani-Bold;
+            font-size: 1.8em;
+            padding-bottom: 0.2em;
+        }
+
+        #container {
+            padding: 1em;
+            width: 30em;
+            margin: 6em auto 0 auto;
+            text-align: center;
+            background: #F4F5F8;
+            border-radius: 15px;
+        }
+
+        #ct {
+            padding:0.5em;
+        }
+
+        #weather_readings {
+            line-height: 1.5;
+        }
+
+        #area_forecast {
+            padding: 2em;
+            line-height: 1.5;
+        }
+
+        .hide {
+            display: none !important;
         }
     </style>
 </head>
 <body>
-    <span id="ct"></span><br />
-    <span id="loc"></span><br />
-    <button id="refresh_btn">Refresh</button><br/><br/>
-    <span id="temp"></span>
-
+    <div id="display">
+        <img src="images/loading.gif" id="loader" />
+        <span id="loader_text">LOADING...</span>
+    </div>
+    <div id="container">
+        <h1>Weather Service</h1>
+        <p id="ct"></p>
+        <div id="weather_readings">
+            <span id="temp"></span><br />
+            <span id="rainfall"></span><br />
+            <span id="humidity"></span><br />
+            <span id="wind_dir"></span><br />
+            <span id="wind_spd"></span><br />
+        </div>
+        <div id="area_forecast">
+            <span id="area"></span><br />
+            <span id="forecast"></span>
+        </div>
+        <div id="buttons">
+            <button id="refresh_btn_enabled">Refresh</button>
+            <div id="refresh_btn_disabled">
+                <p>Refresh</p>
+            </div>
+        </div>
+    </div>
     <script language="javascript">
+        var requestCallback;
+
         $(document).ready(function () {
+            $('#refresh_btn_enabled').addClass('hide');
             display_ct_loc();
 
-            // Refresh the time when refresh button is clicked
+            // Get a new weather reading
             $('#refresh_btn').on('click', function () {
-                var refresh = 500; // Refresh rate in milli seconds
-                mytime = setTimeout('display_ct()', refresh);
+                $('#refresh_btn_enabled').addClass('hide');
+                $('#refresh_btn_disabled').removeClass('hide');
+                display_ct_loc();
             });
-
         })
+
+        // Constructor function to detect the completion of all ajax web service calls.
+        function MyRequestsCompleted(options) {
+            var numRequestToComplete,
+                requestsCompleted
+
+            if (!options) options = {};
+
+            numRequestToComplete = options.numRequest || 0
+            requestsCompleted = 0
+
+            var fireCallback = function () {
+                // Hide the loader and loader text
+                $('#display').hide();
+
+                $('#refresh_btn_enabled').removeClass('hide');
+                $('#refresh_btn_disabled').addClass('hide');
+            };
+
+            this.requestComplete = function (isComplete) {
+                if (isComplete) requestsCompleted++;
+                if (requestsCompleted == numRequestToComplete) fireCallback();
+            }
+        };
 
         // Displays client-side time
         function display_ct_loc() {
@@ -48,9 +174,17 @@
             var posArr = [];
             var lat, lon;
 
+            // Wait for the completion of 7 asynchronous requests before firing callback
+            requestCallback = new MyRequestsCompleted({
+                numRequest: 7
+            });
+            // Show display with loader and loader text
+            $('#display').show();
+            $('#temp, #rainfall, #humidity, #wind_dir, #wind_spd, #forecast').empty();
+
             if (navigator.geolocation) {
                 // Get latitude and longitude of current position
-                navigator.geolocation.getCurrentPosition(function(position) {
+                navigator.geolocation.getCurrentPosition(function (position) {
                     lat = position.coords.latitude;
                     lon = position.coords.longitude;
                     posArr.push(lat, lon);
@@ -63,7 +197,7 @@
                 lon = 103.8365;
                 posArr.push(lat, lon);
                 callback(x1, posArr)
-            }            
+            }
         }
 
         // Find the station closest to the user's location
@@ -74,7 +208,6 @@
                 if (i == 0) {
                     myStation = stations[0];
                 } else {
-                    // Get the latitude and longitude difference of the current location and the current Station
                     var latDiff, lonDiff, newLatDiff, newLonDiff
 
                     // Get the latitude and longitude difference of the current location and the selected Station
@@ -83,9 +216,13 @@
                     newLatDiff = Math.abs(stations[i].location.latitude - posArr[0]);
                     newLonDiff = Math.abs(stations[i].location.longitude - posArr[1]);
 
+                    // Calculate distance between station and user's location
+                    dist = Math.sqrt((latDiff ** 2) + (lonDiff ** 2));
+                    newDist = Math.sqrt((newLatDiff ** 2) + (newLonDiff ** 2));
+
                     // If latitude and longitude difference is less than the selected station (it means its nearer),
                     // change the selected station to the current station.
-                    if (newLatDiff < latDiff && newLonDiff < lonDiff) {
+                    if (newDist < dist) {
                         myStation = stations[i];
                     }
                 }
@@ -108,9 +245,58 @@
             return reading;
         }
 
+        // Find the area closest to the user's location
+        function getNearestArea(posArr, areas) {
+            var myArea;
 
-        // Gets current air temperature, rainfall, relative humidity, wind direction and wind speed across Singapore.
+            for (i = 0; i < areas.length; i++) {
+                if (i == 0) {
+                    myArea = areas[0];
+                } else {
+                    var latDiff, lonDiff, newLatDiff, newLonDiff
+
+                    // Get the latitude and longitude difference of the current location and the area
+                    latDiff = Math.abs(myArea.label_location.latitude - posArr[0]);
+                    lonDiff = Math.abs(myArea.label_location.longitude - posArr[1]);
+                    newLatDiff = Math.abs(areas[i].label_location.latitude - posArr[0]);
+                    newLonDiff = Math.abs(areas[i].label_location.longitude - posArr[1]);
+
+                    // Calculate distance between area and user's location
+                    dist = Math.sqrt((latDiff ** 2) + (lonDiff ** 2));
+                    newDist = Math.sqrt((newLatDiff ** 2) + (newLonDiff ** 2));
+
+                    // If the distance between the new area and the user's location is less than the current distance
+                    // replace current area with new area
+                    if (newDist < dist) {
+                        myArea = areas[i];
+                    }
+                }
+            }
+
+            return myArea;
+        }
+
+        // Get weather forecast of nearest area
+        function getWeatherForecast(area, forecasts) {
+            var forecast;
+            for (i = 0; i < forecasts.length; i++) {
+                if (forecasts[i].area === area.name) {
+                    forecast = forecasts[i].forecast;
+                    break;
+                } else {
+                    forecast = "Error retrieving forecast.";
+                }
+            }
+            return forecast;
+        }
+
+
+
+        // Gets current air temperature, rainfall, relative humidity, wind direction and wind speed across Singapore and the weather forecast.
         function getWeather(data, posArr) {
+            // getLocation function completed
+            requestCallback.requestComplete(true);
+
             // Gets current air temperature
             $.ajax({
                 type: 'GET',
@@ -121,7 +307,7 @@
                 // Get nearest station
                 var stations = data.metadata.stations;
                 myStation = getNearestStation(posArr, stations);
-                
+
                 // Get temperature unit
                 var temp_unit;
                 if (data.metadata.reading_unit === "deg C") {
@@ -141,8 +327,130 @@
 
             }).fail(function (jqXHR, textStatus, errorThrown) {
                 alert(jqXHR.responseText);
+            }).always(function () {
+                requestCallback.requestComplete(true);
             });
 
+            // Gets current rainfall
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/rainfall',
+                contentType: 'application/json; charset=utf-8',
+                data: data
+            }).done(function (data) {
+                // Get nearest station
+                var stations = data.metadata.stations;
+                myStation = getNearestStation(posArr, stations);
+
+                // Get rainfall
+                var readings = data.items[0].readings;
+                var rainfallVal = getStationReading(myStation, readings);
+
+                // Display Rainfall
+                $('#rainfall').html('Rainfall: ' + rainfallVal);
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR.responseText);
+            }).always(function () {
+                requestCallback.requestComplete(true);
+            });
+
+            // Get relative humidity
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/relative-humidity',
+                contentType: 'application/json; charset=utf-8',
+                data: data
+            }).done(function (data) {
+                // Get nearest station
+                var stations = data.metadata.stations;
+                myStation = getNearestStation(posArr, stations);
+
+                // Get relative humidity
+                var readings = data.items[0].readings;
+                var humidityVal = getStationReading(myStation, readings);
+
+                // Display relative humidity
+                $('#humidity').html('Relative Humidity: ' + humidityVal + '&#37;');
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR.responseText);
+            }).always(function () {
+                requestCallback.requestComplete(true);
+            });
+
+            // Get wind direction
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/wind-direction',
+                contentType: 'application/json; charset=utf-8',
+                data: data
+            }).done(function (data) {
+                // Get nearest station
+                var stations = data.metadata.stations;
+                myStation = getNearestStation(posArr, stations);
+
+                // Get wind direction
+                var readings = data.items[0].readings;
+                var windDirVal = getStationReading(myStation, readings);
+
+                // Display wind direction
+                $('#wind_dir').html('Wind Direction: ' + windDirVal + '&#176;');
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR.responseText);
+            }).always(function () {
+                requestCallback.requestComplete(true);
+            });
+
+            // Get wind speed
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/wind-speed',
+                contentType: 'application/json; charset=utf-8',
+                data: data
+            }).done(function (data) {
+                // Get nearest station
+                var stations = data.metadata.stations;
+                myStation = getNearestStation(posArr, stations);
+
+                // Get relative humidity
+                var readings = data.items[0].readings;
+                var windSpdVal = getStationReading(myStation, readings);
+
+                // Display wind speed
+                $('#wind_spd').html('Wind Speed: ' + windSpdVal + 'kn');
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR.responseText);
+            }).always(function () {
+                requestCallback.requestComplete(true);
+            });
+
+            // Gets 2hr weather forecast
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/2-hour-weather-forecast',
+                contentType: 'application/json; charset=utf-8',
+                data: data
+            }).done(function (data) {
+                // Get closest area
+                var areas = data.area_metadata;
+                myArea = getNearestArea(posArr, areas);
+
+                // Get forecast
+                var forecasts = data.items[0].forecasts;
+                var currentForecast = getWeatherForecast(myArea, forecasts);
+
+                // Display area and weather forecast
+                $('#area').html('Detected Area: ' + myArea.name);
+                $('#forecast').html('Current Forecast: ' + currentForecast);
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR.responseText);
+            }).always(function () {
+                requestCallback.requestComplete(true);
+            });
         }
 
     </script>
