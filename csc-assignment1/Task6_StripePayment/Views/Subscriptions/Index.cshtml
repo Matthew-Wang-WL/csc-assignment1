@@ -1,0 +1,198 @@
+﻿@{
+    ViewData["Title"] = "Subscribe to a Plan | Customers";
+}
+
+<h1>Subscription Plans</h1>
+
+<h4>Subscribe to a plan.</h4>
+<hr />
+<div id="" class="row">
+    <div class="col subscription-box">
+        <p class="h5 font-weight-light">Basic</p><br />
+        <p class="h1 font-weight-light" style="font-size: 45px;"></p>
+        <button name="Basic" class="planButton" id="basicBtn">Buy Basic Plan</button>
+    </div>
+    <div class="col subscription-box">
+        <p class="h5 font-weight-light">Advanced</p><br />
+        <p class="h1 font-weight-light" style="font-size: 45px;"></p>
+        <button name="Advanced" class="planButton" id="advancedBtn">Buy Advanced Plan</button>
+    </div>
+    <div class="col subscription-box">
+        <p class="h5 font-weight-light">Premium</p><br/>
+        <p class="h1 font-weight-light" style="font-size: 45px;"></p>
+        <button name="Premium" class="planButton" id="premiumBtn">Buy Premium Plan</button>
+    </div>
+</div>
+
+<div id="paymentContainer" style="border-radius:5px; border:1px solid #999999; 
+flex-direction:column;" class="row mt-3">
+    <div style="padding: 20px;" class="col">
+        <h4 id="planChosenTxt"></h4>
+        <h4 class="mb-4 font-weight-light">Enter payment details</h4>
+        <div style="width: 400px;">
+            <form id="subcription-form">
+                <div id="card-element" class="MyCardElement">
+                    <!-- Elements will create input elements here -->
+                </div>
+
+                <!-- We'll put the error messages in this element -->
+                <div id="card-errors" role="alert"></div>
+                <button id="subscribeBtn">Subscribe</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<h2 id="subscriptionStatus"></h2>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#paymentContainer').hide();
+            var name = ""
+            var priceId = ""
+            var stripe = Stripe('pk_test_51GsROeLV2fzyvmGfFbycBhGcUoJfz4Mk5DW4QGI7UDJKRkJ5FdjW4xkXsWuSIaAztN2fnWG951JrbxfwmXKCeMhF00GXEIb8xJ');
+
+            // Get products and prices
+            $.ajax({
+                url: '/api/subscriptions/get',
+                type: 'GET',
+            }).done(function (response) {
+                $('.h1').each(function (i, obj) {
+                    obj.innerHTML = response[i].amount / 100 + " " + response[i].currency.toUpperCase() + " / " + response[i].interval;
+                });
+                $('#basicBtn').val(response[0].id);
+                $('#advancedBtn').val(response[1].id);
+                $('#premiumBtn').val(response[2].id);
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR);
+            });
+
+            //Add onclick listener to all plan buttons
+            $('.planButton').on("click", function () {
+                name = $(this).attr('name')
+                priceId = $(this).val()
+
+                $('#paymentContainer').show();
+                $('#planChosenTxt').text("You have chosen the " + name + " plan.")
+            })
+
+
+            // Create an instance of Elements.
+            var elements = stripe.elements();
+
+            //// STRIPE BILLING DEMO
+            // Set up Stripe.js and Elements to use in checkout form
+            var style = {
+                base: {
+                    color: "#32325d",
+                    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                    fontSmoothing: "antialiased",
+                    fontSize: "16px",
+                    "::placeholder": {
+                        color: "#aab7c4"
+                    }
+                },
+                invalid: {
+                    color: "#fa755a",
+                    iconColor: "#fa755a"
+                }
+            };
+
+            var cardElement = elements.create("card", { style: style });
+            cardElement.mount("#card-element");
+
+            cardElement.on('change', showCardError);
+
+            function showCardError(event) {
+                let displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            }
+
+            function createPaymentMethod(cardElement, customerId, priceId) {
+                return stripe
+                    .createPaymentMethod({
+                        type: 'card',
+                        card: cardElement,
+                    })
+                    .then((result) => {
+                        if (result.error) {
+                            displayError(error);
+                        } else {
+                            createSubscription({
+                                customerId: customerId,
+                                paymentMethodId: result.paymentMethod.id,
+                                priceId: priceId,
+                            });
+                        }
+                    });
+            }
+
+            function createSubscription({ customerId, paymentMethodId, priceId }) {
+                return (
+                    fetch('/api/subscriptions/create', {
+                        method: 'post',
+                        headers: {
+                            'Content-type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            customerId: customerId,
+                            paymentMethodId: paymentMethodId,
+                            priceId: priceId,
+                        }),
+                    })
+                        .then((response) => {
+                            return response.json();
+                        })
+                        // If the card is declined, display an error to the user.
+                        .then((result) => {
+                            if (result.error) {
+                                // The card had an error when trying to attach it to a customer.
+                                throw result;
+                            }
+                            return result;
+                        })
+                        // Normalize the result to contain the object returned by Stripe.
+                        // Add the addional details we need.
+                        .then((result) => {
+                            return {
+                                paymentMethodId: paymentMethodId,
+                                priceId: priceId,
+                                subscription: result,
+                            };
+                        })
+                        // No more actions required. Provision your service for the user.
+                        .then(onSubscriptionComplete)
+                        .catch((error) => {
+                            // An error has happened. Display the failure to the user here.
+                            // We utilize the HTML element we created.
+                            showCardError(error);
+                        })
+                );
+            }
+
+            function onSubscriptionComplete(result) {
+                // Payment was successful.
+                if (result.subscription.status === 'active') {
+                    $('#subscriptionStatus').text("You have successfully subscribed to the " + name + " plan")
+                }
+            }
+
+            $('#subscribeBtn').on('click', function () {
+                event.preventDefault();
+                let custId = getCookie("custId");
+                createPaymentMethod(cardElement, custId, priceId)
+            })
+
+            //Get cookie by name
+            function getCookie(name) {
+                var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+                return v ? v[2] : null;
+            }
+        })
+    </script>
+}
