@@ -75,8 +75,7 @@ namespace Task2.Controllers
             if (!_productRepository.Update(product))
             {
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, "Selected item does not exist"));
-            }
-            else
+            } else
             {
                 return Request.CreateResponse(HttpStatusCode.OK, "Item " + id + " was updated successfully.");
             }

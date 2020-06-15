@@ -1,0 +1,112 @@
+﻿@{
+    ViewData["Title"] = "Sign Up | Customers";
+}
+
+<h1>Sign Up</h1>
+
+<h4>Create a customer account.</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form id="customerForm">
+            <div class="text-danger"></div>
+            <div class="form-group">
+                <label class="control-label"></label>
+                <input id="nameInput" name="nameInput"  class="form-control" />
+                <span class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label"></label>
+                <input id="emailInput" name="emailInput" class="form-control" />
+                <span class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <button id="submitBtn" type="button" class="btn btn-primary">Sign Up</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<h2 id="creationText"></h2>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            //// Declare validation methods and rules
+            //Validate name
+            $.validator.addMethod('validName', function (value, element) {
+                return this.optional(element) || /^[A-Za-z0-9]+(?:[' _-][A-Za-z0-9]+)*$/.test(value);
+            }, 'Please enter valid name with alphanumerical characters or \'_\',  \'-\',  \'\'\'');
+
+            //Set jquery validation rules
+            $('#customerForm').validate({
+                rules: {
+                    nameInput: {
+                        required: true,
+                        maxlength: 100,
+                        validName: true
+                    },
+                    emailInput: {
+                        required: true,
+                    },
+                },
+                messages: {
+                    nameInput: {
+                        required: 'Name is required',
+                        maxlength: 'Not more than 100 characters'
+                    },
+                    emailInput: {
+                        required: 'Email is required'
+                    },
+                },
+                invalidHandler: function (form, validator) {
+                    var errors = validator.numberOfInvalids();
+                    if (errors) {
+                        validator.errorList[0].element.focus();
+                    }
+                }
+            });
+
+            // Submit form
+            $('#submitBtn').on("click", function () {
+                $('#creationText').text('')
+                //Validate form
+                if ($('#customerForm').valid()) {
+                    let collectedName = $('#nameInput').val();
+                    let collectedEmail = $('#emailInput').val();
+
+                    function WebFormData(inName, inEmail) {
+                        this.Name = inName;
+                        this.email = inEmail;
+                    }
+
+                    let webFormData = new WebFormData(collectedName,
+                        collectedEmail);
+
+                    $.ajax({
+                        url: '/api/customers/create',
+                        type: 'POST',
+                        data: webFormData,
+                        contentType: 'application/x-www-form-urlencoded',
+                    }).done(function (response) {
+
+                        let custId = response.customerId
+
+                        //Create a cookie to store the customerId for use in other Stripe services
+                        document.cookie = 'custId=' + custId
+
+                        $('#creationText').text('Account created successfully.')
+
+                        //Redirect to Subscriptions page
+                        window.location.href = '../Subscriptions'
+
+                    }).fail(function (jqXHR, textStatus, errorThrown) {
+                        $('#creationText').text('Failed to create account.')
+                    });
+                }
+            });
+               
+        })
+    </script>
+}
