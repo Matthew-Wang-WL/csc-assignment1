@@ -57,7 +57,6 @@
             $('#portalBtn').on('click', function () {
                 event.preventDefault();
                 let collectedCustId = getCookie("custId");
-                //"cus_HTe98aCkxWE7KU"
 
                 if (collectedCustId != null) {
 
@@ -108,7 +107,7 @@
                             data: webFormData,
                             contentType: 'application/x-www-form-urlencoded',
                         }).done(function (response) {
-                            window.location.href = response.portalUrl;
+                            $('#errorTxt').text(response.message);
                         }).fail(function (jqXHR, textStatus, errorThrown) {
                             $('#errorTxt').text(jqXHR);
                         });
