@@ -32,11 +32,15 @@ namespace Task6_StripePayment
             services.AddSingleton(sp =>
                 sp.GetRequiredService<IOptions<MyDatabaseSettings>>().Value);
 
-            services.AddSingleton<CustomerDbService>();
-
-            services.AddSingleton<StripeService>();
+            services.AddScoped<StripeService>();
+            services.AddScoped<CustomerDbService>();
+            services.AddScoped<InvoiceDbService>();
+            services.AddScoped<SubscriptionDbService>();
+            services.AddScoped<ChargeDbService>();
 
             services.AddControllersWithViews();
+
+            services.AddHttpContextAccessor();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -63,7 +67,7 @@ namespace Task6_StripePayment
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Subscriptions}/{action=Index}/{id?}");
+                    pattern: "{controller=Customers}/{action=Index}/{id?}");
             });
         }
     }

@@ -1,0 +1,99 @@
+﻿<div id="container">
+    <div id="panel">
+        <a asp-controller="Subscriptions" asp-action="Manage">All Subscriptions</a>
+        <h1>@ViewBag.Subscription.Id</h1>
+
+        <div>
+            <div>
+                Status: @ViewBag.Subscription.Status
+            </div>
+            @if (ViewBag.Subscription.PauseCollection != null)
+            {
+                <div>
+                    Pause Collection Behavior: @ViewBag.Subscription.PauseCollection.Behavior
+                </div>
+                <div>
+                    Pause Collection Resumes At: @ViewBag.Subscription.PauseCollection.ResumesAt
+                </div>
+            }
+        </div>
+        <hr />
+
+        <fieldset>
+            <label>
+                <span>Behavior</span>
+                <select name="" id="behavior">
+                    <option value="mark_uncollectible">Mark Uncollectible (Offer services for free)</option>
+                    <option value="keep_as_draft">Keep as draft (Temporarily offer services for free and collect payment later)</option>
+                    <option value="void">Void (Unable to provide services)</option>
+                </select>
+            </label>
+            <br />
+            <label>
+                <span>Resumes At</span>
+                <input type="date" class="field" id="resumes-input" />
+            </label>
+        </fieldset>
+
+        <button type="submit" id="pause">Pause</button>
+        <br /><br />
+        <button type="submit" id="reactivate">Reactivate</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var behavior = document.getElementById("behavior");
+        var resumesAt = document.getElementById("resumes-input");
+        var pauseBtn = document.getElementById("pause");
+        var reactivateBtn = document.getElementById("reactivate");
+
+        function getResumesAt() {
+            if (resumesAt.value) {
+                return resumesAt.valueAsDate.getTime() / 1000;
+            }
+        }
+
+        pauseBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            fetch('/subscriptions/pause', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    subscription: "@ViewBag.Subscription.Id",
+                    behavior: behavior.value,
+                    resumes_at: getResumesAt(),
+                }),
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                 console.log("Success: ", data);
+            })
+            .catch((error) => {
+                console.error("Error: ", error);
+            });
+        });
+
+        reactivateBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            fetch('/subscriptions/reactivate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    subscription: "@ViewBag.Subscription.Id",
+                }),
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                console.log("Success: ", data);
+            })
+            .catch((error) => {
+                console.error("Error: ", error);
+            });
+        });
+    </script>
+}

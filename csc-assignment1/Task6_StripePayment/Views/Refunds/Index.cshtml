@@ -1,0 +1,164 @@
+﻿<div id="container">
+    <div id="panel">
+        <h1>Refunds</h1>
+    </div>
+
+    <div id="msg" role="alert"></div>
+    <div id="payment-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Total Refunded</th>
+                    <th>&nbsp;</th>
+                    <th>Make a Refund</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        /* Helper function to display dates nicely */
+        function formatDate(epochTime) {
+            console.log(epochTime);
+            return new Date(epochTime).toISOString().split('T')[0];
+        }
+
+        /* helper function to format an amt to USD */
+        function formatAmount(amt) {
+            console.log(amt);
+            return '$' + (amt / 100.0);
+        }
+
+        /* show a msg */
+        var displayMsg = function (msg) {
+            var msgField = document.querySelector('#msg');
+            msgField.textContent = msg;
+            setTimeout(function () {
+                msgField.textContent = "";
+            }, 10000);
+        }
+
+        function generateHtmlForPayment(payment) {
+            var charge = payment.charges[0];
+            var refunds;
+
+            if (charge == undefined) {
+                charge = payment.charges.data[0];
+                refunds = charge.refunds.data;
+            } else {
+                refunds = charge.refunds;
+            }
+            
+
+            var refund_failed = (refunds.length > 0 && refunds[0].status ==
+                'failed') ? true : false;
+
+            var refundable_amount = 0;
+            console.log(charge.amountRefunded == undefined);
+            console.log("ChargeAmt" + charge.amount)
+            console.log("ChargeRefunded" + charge.amount_refunded)
+            if (charge.amountRefunded == undefined) {
+                refundable_amount = charge.amount - charge.amount_refunded;
+            } else { 
+                refundable_amount = charge.amount - charge.amountRefunded;
+            }
+            
+            console.log("RefundableAmount" + refundable_amount);
+
+            result = `<tr id="${payment.id}">
+               <td>${formatDate(payment.created)}</td>
+               <td>${formatAmount(payment.amount)}</td>
+               <td>${payment.description}</td><td></td>`;
+
+            if (charge.amountRefunded == undefined) {
+                result += `<td>${formatAmount(charge.amount_refunded)}</td>`
+            } else {
+                result += `<td>${formatAmount(charge.amountRefunded)}</td>`
+            }
+
+            if ((refundable_amount > 0) && (!refund_failed)) {
+                result += `<td><input type="text" class="refund-amt" 
+                id="refund_${payment.id}" placeholder="${formatAmount(refundable_amount)}"/></td>`
+                result += `<td><button class="refund-btn" data-payment="${payment.id}" 
+                            onclick="refundPayment(this)">Refund</button></td></tr>`;
+            }
+            else if (refund_failed) {
+                result += `<td>----</td><td>Unable to refund</td></tr>`
+            }
+            else {
+                result += `<td></td><td>Fully refunded</td></tr>`
+            }
+
+            return result;
+
+        }
+
+        function init() {
+            customer_id = getCookie("custId");
+            url = `/refunds/${customer_id}/charges`;
+            return fetch(url, {
+                method: 'get',
+                headers: { 'Content-Type': 'application/json'}
+            }).then(function (response) {
+                return response.json();
+            }).then(function (json) {
+                payments = json;
+                var tableBody = document.getElementById('payment-table').getElementsByTagName('tbody')[0];
+
+                payments.forEach((payment) => {
+
+                    console.log(payment.id);
+                    var newRow = tableBody.insertRow(tableBody.rows.length);
+                    newRow.innerHTML = generateHtmlForPayment(payment);
+                });
+            });
+        }
+
+        function refundPayment(button) {
+            var paymentRow = button.parentNode.parentNode;
+            payment_id = button.dataset.payment;
+
+            var params = {}
+            params.payment_id = payment_id;
+
+            var input = document.getElementById('refund_' + payment_id);
+            if (input.value) {
+                params.amount = input.value * 100;
+            }
+
+            return fetch("/refunds/refund-payment", {
+                method: "post",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(params)
+            }).then(function (result) {
+                return result.json();
+            }).then(function (json) {
+                if (json.response.error) {
+                    displayMsg("Error: " + json.response.error.message);
+                } else {
+                    refund = json.response.refund;
+                    displayMsg("Payment refunded! " + json.response.refund.id);
+                    paymentRow.innerHTML = generateHtmlForPayment(json.response.refund.payment_intent);
+                }
+            });
+        }
+
+        //Get cookie by name
+        function getCookie(name) {
+            var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+            return v ? v[2] : null;
+        }
+
+        init();
+    </script>
+}

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Driver.Core.Operations;
+using Newtonsoft.Json.Linq;
 using Stripe;
 using Task6_StripePayment.Models;
 using Task6_StripePayment.Services;
@@ -32,6 +34,67 @@ namespace Task6_StripePayment.Controllers
             return View();
         }
 
+        [Route("Manage")]
+        public IActionResult Manage()
+        {
+            return View();
+        }
+
+        [Route("subscriptions/{subscriptionId}")]
+        public IActionResult Subscription(string subscriptionId) {
+
+            Subscription subscription = _stripeService.GetSubscription(subscriptionId);
+
+            ViewBag.Subscription = subscription;
+
+            return View();
+        }
+
+        [HttpPost("subscriptions/pause")]
+        public IActionResult Pause()
+        {
+            using (var reader = new StreamReader(Request.Body))
+            {
+                try
+                {
+                    var data = JObject.Parse(reader.ReadToEndAsync().Result);
+
+                    Subscription subscription = _stripeService.Pause(data);
+
+                    return Ok(subscription.ToJson());
+
+                    
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                    return BadRequest("Failed to pause subscription");
+                }
+            }
+        }
+
+        [HttpPost("subscriptions/reactivate")]
+        public IActionResult Reactivate()
+        {
+            using (var reader = new StreamReader(Request.Body))
+            {
+                try
+                {
+                    var data = JObject.Parse(reader.ReadToEndAsync().Result);
+
+                    Subscription subscription = _stripeService.Reactivate(data);
+
+                    return Ok(subscription.ToJson());
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                    return BadRequest("Failed to reactivate subscription");
+                }
+            }
+        }
+
+
         [HttpGet]
         [Route("api/subscriptions/get")]
         public IActionResult Get()
@@ -41,6 +104,16 @@ namespace Task6_StripePayment.Controllers
 
             var plansArr = plans.ToArray().Reverse();
             return new JsonResult(plansArr);
+        }
+
+        [HttpGet]
+        [Route("api/subscriptions/getall")]
+        public IActionResult GetAll()
+        {
+            StripeList<Subscription> subscriptions = _stripeService.GetSubscriptions();
+            List<Subscription> data = subscriptions.Data;
+
+            return new JsonResult(data);
         }
 
         [HttpPost]

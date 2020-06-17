@@ -48,6 +48,35 @@
         .MyCardElement--webkit-autofill {
             background-color: #fefde5 !important;
         }
+
+        #payment-table {
+            max-width: 720px;
+            width: 100%;
+            margin: 0 auto;
+            border: 1px solid #e8e8fb;
+        }
+
+        table td, th {
+            padding: 5px;
+        }
+
+        td, th {
+            text-align: left;
+        }
+
+        .refund-btn {
+            width: 80px;
+            height: 30px;
+        }
+
+        .refund-amt {
+            border: 1px solid #e8e8fb;
+            width: 75px;
+        }
+
+        #msg {
+            color: green;
+        }
     </style>
 </head>
 <body>
@@ -70,6 +99,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Subscriptions" asp-action="Index">Subscribe</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Refunds" asp-action="Index">Refunds</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Subscriptions" asp-action="Manage">Manage Subscriptions</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -90,6 +125,7 @@
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/moment/moment.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @RenderSection("Scripts", required: false)
 </body>

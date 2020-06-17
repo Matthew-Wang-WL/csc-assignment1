@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Task6_StripePayment.Models;
@@ -27,7 +28,13 @@ namespace Task6_StripePayment.Services
 
         public CustomerViewModel Get(string id)
         {
-            return customers.Find(customer => customer.Id == id).FirstOrDefault();
+            try { 
+                return customers.Find(customer => customer.StripeId == id).FirstOrDefault();
+            } catch(Exception e)
+            {
+                Debug.WriteLine(e);
+                return null;
+            }
         }
 
         public async Task<bool> Create(CustomerViewModel customer)
@@ -35,12 +42,12 @@ namespace Task6_StripePayment.Services
             try
             {
                 await customers.InsertOneAsync(customer).ConfigureAwait(false);
-                //System.Diagnostics.Debug.WriteLine("Created customer");
+                System.Diagnostics.Debug.WriteLine("Created customer");
                 return true;
             }
             catch(Exception e)
             {
-                //System.Diagnostics.Debug.WriteLine(e.ToString());
+                System.Diagnostics.Debug.WriteLine(e);
                 return false;
             }
         }

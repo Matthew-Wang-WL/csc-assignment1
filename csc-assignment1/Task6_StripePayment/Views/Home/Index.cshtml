@@ -3,7 +3,129 @@
 }
 
 <div style="padding: 20px;">
-    <form method="POST" action="/api/createbillingportal">
-        <button type="submit">Manage billing</button>
+    <h6>Go to billing portal (You must create a customer first!)</h6>
+    <form>
+        <button id="portalBtn">Manage billing</button>
     </form>
 </div>
+
+<div style="padding: 20px" id="changeBillingDate">
+    <h6>Change billing date</h6>
+    <input type="date" id="datePicker" />
+    <button id="getDateBtn">Change billing cycle</button>
+</div>
+
+<h5 id="errorTxt" style="color: #FF0000;"></h5>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            $('#changeBillingDate').hide();
+
+            var subscriptionId = getCookie("subscriptionId");
+            var subscriptionType = getCookie("subscriptionType");
+            var subscriptionStartDate = getCookie("startDate");
+
+            if (subscriptionId != null) {
+                //Check if subscription is monthly
+                if (subscriptionType === "month") {
+                    $('#changeBillingDate').show();
+                    //Get start date of subscription
+                    var timestamp = moment.unix(subscriptionStartDate);
+                    console.log(timestamp);
+                    timestamp.add(1, 'day');
+                    timestamp.set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
+                    //console.log(timestamp);
+
+                    var timestampMax = timestamp.clone();
+                    timestampMax.add(1, 'month');
+                    timestampMax.subtract(2, 'day');
+                    //console.log(timestampMax);
+
+                    //Set minimum date for selection
+                    var date = timestamp.format("YYYY-MM-DD");
+                    var dateMax = timestampMax.format("YYYY-MM-DD")
+                    $('#datePicker').attr({ "min": date, "max": dateMax })
+                } else {
+                    $('#changeBillingDate').hide();
+                }
+            }
+            
+
+            $('#portalBtn').on('click', function () {
+                event.preventDefault();
+                let collectedCustId = getCookie("custId");
+                //"cus_HTe98aCkxWE7KU"
+
+                if (collectedCustId != null) {
+
+                    function WebFormData(inCustId) {
+                        this.CustomerId = inCustId;
+                    }
+
+                    let webFormData = new WebFormData(collectedCustId);
+
+                    $.ajax({
+                        url: '/api/createbillingportal',
+                        type: 'POST',
+                        data: webFormData,
+                        contentType: 'application/x-www-form-urlencoded',
+                    }).done(function (response) {
+                        window.location.href = response.portalUrl;
+                    }).fail(function (jqXHR, textStatus, errorThrown) {
+                        $('#errorTxt').text(jqXHR);
+                    });
+
+                }
+                else {
+                    $('#errorTxt').text("You are not signed in. Please create an account.")
+                }
+            })
+
+            $('#getDateBtn').on('click', function () {
+                event.preventDefault();
+
+                let subscriptionId = getCookie("subscriptionId");
+                let selectedDate = $('#datePicker').val();
+                let unixTimestamp = 0;
+
+                if (subscriptionId != null) {
+                    if (selectedDate != "") {
+                        unixTimestamp = moment.utc(selectedDate + " 00:00:00").unix();
+
+                        function WebFormData(inSubId, inUnixTime) {
+                            this.SubscriptionId = inSubId;
+                            this.UnixTimestamp = inUnixTime;
+                        }
+
+                        let webFormData = new WebFormData(subscriptionId, unixTimestamp);
+
+                        $.ajax({
+                            url: '/api/changebillingcycle',
+                            type: 'POST',
+                            data: webFormData,
+                            contentType: 'application/x-www-form-urlencoded',
+                        }).done(function (response) {
+                            window.location.href = response.portalUrl;
+                        }).fail(function (jqXHR, textStatus, errorThrown) {
+                            $('#errorTxt').text(jqXHR);
+                        });
+                    } else {
+                        $('#errorTxt').text("You must select a date!")
+                    }
+                } else {
+                    $('#errorTxt').text("You do not have a subscription. Please subscribe to a plan.")
+                }
+            })
+
+            //Get cookie by name
+            function getCookie(name) {
+                var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+                return v ? v[2] : null;
+            }
+        });
+
+    </script>
+}

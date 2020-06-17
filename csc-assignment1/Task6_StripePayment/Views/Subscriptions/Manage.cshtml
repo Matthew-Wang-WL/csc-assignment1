@@ -1,0 +1,49 @@
+﻿<div id="container">
+    <div id="panel">
+        <h1>Subscriptions</h1>
+        <ul id="subscription-list">
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+
+        function init() {
+            url = `api/subscriptions/getall`;
+            return fetch(url, {
+                method: 'get',
+                headers: { 'Content-Type': 'application/json' }
+            }).then(function (response) {
+                return response.json();
+            }).then(function (json) {
+                subscriptions = json;
+                var list = document.getElementById('subscription-list');
+
+                subscriptions.forEach((subscription) => {
+                    var newItem = document.createElement("li");
+                    list.appendChild(newItem);
+                    newItem.innerHTML = generateHtmlForSubscription(subscription);
+                });
+            });
+        }
+
+
+        function generateHtmlForSubscription(subscription) {
+            result = `<a href="/subscriptions/${subscription.id}">
+               ${subscription.id}`;
+
+            if (subscription.pauseCollection != null) {
+                result += ` paused</a>`;
+            }
+            else {
+                result += `</a>`
+            }
+            
+            return result;
+
+        }
+
+        init();
+    </script>
+}

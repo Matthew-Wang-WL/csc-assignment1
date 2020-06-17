@@ -10,5 +10,6 @@ namespace Task6_StripePayment.Models
         public string customerId { get; set; }
         public string paymentMethodId { get; set; }
         public string priceId { get; set; }
+        public int unixTimestamp { get; set; }
     }
 }

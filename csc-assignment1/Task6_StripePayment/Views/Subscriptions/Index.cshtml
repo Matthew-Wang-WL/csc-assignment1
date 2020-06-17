@@ -18,11 +18,18 @@
         <button name="Advanced" class="planButton" id="advancedBtn">Buy Advanced Plan</button>
     </div>
     <div class="col subscription-box">
-        <p class="h5 font-weight-light">Premium</p><br/>
+        <p class="h5 font-weight-light">Monthly</p><br/>
         <p class="h1 font-weight-light" style="font-size: 45px;"></p>
-        <button name="Premium" class="planButton" id="premiumBtn">Buy Premium Plan</button>
+        <button name="Monthly" class="planButton" id="premiumBtn">Buy Monthly Plan</button>
     </div>
 </div>
+<div class="row" id="selectBillingDate" style="border-radius:5px; border:1px solid #999999;">
+    <div style="padding:20px;">
+        <h4>Select Start Date</h4>
+        <input type="date" id="datePicker" />
+    </div>
+</div>
+
 
 <div id="paymentContainer" style="border-radius:5px; border:1px solid #999999; 
 flex-direction:column;" class="row mt-3">
@@ -42,7 +49,6 @@ flex-direction:column;" class="row mt-3">
         </div>
     </div>
 </div>
-
 <h2 id="subscriptionStatus"></h2>
 
 @section Scripts {
@@ -53,17 +59,43 @@ flex-direction:column;" class="row mt-3">
             var priceId = ""
             var stripe = Stripe('pk_test_51GsROeLV2fzyvmGfFbycBhGcUoJfz4Mk5DW4QGI7UDJKRkJ5FdjW4xkXsWuSIaAztN2fnWG951JrbxfwmXKCeMhF00GXEIb8xJ');
 
+            //Get tomorrow's date (UTC)
+            var timestamp = moment().utc();
+            timestamp.add(1, 'day');
+            timestamp.set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
+            console.log(timestamp);
+
+            var timestampMax = timestamp.clone();
+            timestampMax.add(1, 'month');
+            timestampMax.subtract(2, 'day');
+            console.log(timestampMax);
+
+            //Set minimum date for selection
+            var date = timestamp.format("YYYY-MM-DD");
+            var dateMax = timestampMax.format("YYYY-MM-DD")
+            $('#datePicker').attr({ "min": date, "max": dateMax })
+
+
+            var monthly; //Used to check if the plan chosen was the monthly plan
+
+            //Hide billing date selection by default
+            $('#selectBillingDate').hide();
+
             // Get products and prices
             $.ajax({
                 url: '/api/subscriptions/get',
                 type: 'GET',
             }).done(function (response) {
+                let index = [0, 1, 3];
                 $('.h1').each(function (i, obj) {
-                    obj.innerHTML = response[i].amount / 100 + " " + response[i].currency.toUpperCase() + " / " + response[i].interval;
+                    obj.innerHTML = response[index[i]].amount / 100 + " " + response[i].currency.toUpperCase() + " / " + response[index[i]].interval;
                 });
                 $('#basicBtn').val(response[0].id);
                 $('#advancedBtn').val(response[1].id);
-                $('#premiumBtn').val(response[2].id);
+                $('#premiumBtn').val(response[3].id);
+
+                //monthly plan id
+                monthly = response[3].id
             }).fail(function (jqXHR, textStatus, errorThrown) {
                 console.log(jqXHR);
             });
@@ -72,6 +104,14 @@ flex-direction:column;" class="row mt-3">
             $('.planButton').on("click", function () {
                 name = $(this).attr('name')
                 priceId = $(this).val()
+
+                //Check if the plan chosen was the monthly plan
+                if (priceId === monthly) {
+                    $('#selectBillingDate').show();
+                } else {
+                    $('#selectBillingDate').hide();
+                    $('#datePicker').val('');
+                }
 
                 $('#paymentContainer').show();
                 $('#planChosenTxt').text("You have chosen the " + name + " plan.")
@@ -113,7 +153,7 @@ flex-direction:column;" class="row mt-3">
                 }
             }
 
-            function createPaymentMethod(cardElement, customerId, priceId) {
+            function createPaymentMethod(cardElement, customerId, priceId, unixTimestamp) {
                 return stripe
                     .createPaymentMethod({
                         type: 'card',
@@ -127,12 +167,13 @@ flex-direction:column;" class="row mt-3">
                                 customerId: customerId,
                                 paymentMethodId: result.paymentMethod.id,
                                 priceId: priceId,
+                                unixTimestamp: unixTimestamp,
                             });
                         }
                     });
             }
 
-            function createSubscription({ customerId, paymentMethodId, priceId }) {
+            function createSubscription({ customerId, paymentMethodId, priceId, unixTimestamp }) {
                 return (
                     fetch('/api/subscriptions/create', {
                         method: 'post',
@@ -143,6 +184,7 @@ flex-direction:column;" class="row mt-3">
                             customerId: customerId,
                             paymentMethodId: paymentMethodId,
                             priceId: priceId,
+                            unixTimestamp: unixTimestamp,
                         }),
                     })
                         .then((response) => {
@@ -179,13 +221,23 @@ flex-direction:column;" class="row mt-3">
                 // Payment was successful.
                 if (result.subscription.status === 'active') {
                     $('#subscriptionStatus').text("You have successfully subscribed to the " + name + " plan")
+                    document.cookie = 'subscriptionId=' + result.subscription.id
+                    document.cookie = 'subscriptionType=' + result.subscription.plan.interval
+                    document.cookie = 'startDate=' + result.subscription.start_date
                 }
             }
 
             $('#subscribeBtn').on('click', function () {
                 event.preventDefault();
                 let custId = getCookie("custId");
-                createPaymentMethod(cardElement, custId, priceId)
+                let selectedDate = $('#datePicker').val();
+                let unixTimestamp = 0;
+
+                if (selectedDate != "") {
+                    unixTimestamp = moment.utc(selectedDate + " 00:00:00").unix();
+                }
+
+                createPaymentMethod(cardElement, custId, priceId, unixTimestamp)
             })
 
             //Get cookie by name
