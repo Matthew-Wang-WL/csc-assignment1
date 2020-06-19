@@ -1,0 +1,63 @@
+﻿<body>
+    <div class="container">
+        <h1>Image Recognition Demo</h1>
+        <form>
+            <h2>Upload Image</h2>
+            <input id="photo" type="file" name="photo" />
+            <br />
+            <img src="" id="preview">
+            <br />
+            <input id="submit" type="button" value="Submit" name="submit" />
+            <br />
+            <p id="link"></p>
+        </form>
+    </div>
+</body>
+
+@section scripts {
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#submit').click(function () {
+                var data = new FormData();
+                var imageFile = document.getElementById("photo").files[0];
+                data.append('photo', imageFile);
+                $.ajax({
+                    url: '/api/clarifai',
+                    processData: false,
+                    contentType: false,
+                    data: data,
+                    method: "POST",
+                    dataType: "json",
+                }).done(function (result) {
+                    $('#link').text(result);
+                }).fail(function (a, b, c) {
+                    console.log(a, b, c);
+                });
+            });
+        });
+
+        //Image preview after upload
+        var fileTag = document.getElementById("photo"),
+            preview = document.getElementById("preview");
+
+        fileTag.addEventListener("change", function () {
+            changeImage(this);
+        });
+
+        function changeImage(input) {
+            var reader;
+
+            if (input.files && input.files[0]) {
+                reader = new FileReader();
+
+                reader.onload = function (e) {
+                    preview.setAttribute('src', e.target.result);
+                }
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+
+}
