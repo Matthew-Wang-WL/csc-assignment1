@@ -38,35 +38,12 @@
             padding-bottom: 1em;
         }
 
-        #display {
-            width: 200px;
-            position: fixed;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            background: #FCFCFC;
-            border-radius: 5px;
-            box-shadow: #999999 0px 0px 10px 2px;
-        }
-
-        #loader {
-            margin-top: -2.3em;
-        }
-
-        #loader_text {
-            text-align: center;
-            display: block;
-            margin-top: -1.8em;
-            color: #1d3f72;
-            font-family: Rajdhani-Bold;
-            font-size: 1.8em;
-            padding-bottom: 0.2em;
-        }
+        
 
         #container {
             padding: 1em;
             width: 30em;
-            margin: 6em auto 0 auto;
+            margin:0 auto 0 auto;
             text-align: center;
             background: #F4F5F8;
             border-radius: 15px;
@@ -88,12 +65,45 @@
         .hide {
             display: none !important;
         }
+
+        #loader {
+            width: 10%;
+        }
+
+        #loader_text {
+            color: #1d3f72;
+            font-weight: 100;
+            font-size: 1.1em;
+            padding: 10px;
+            display:flex;
+            align-self: center;
+        }
+
+        #display {
+            margin: 0 auto;
+            background: #FCFCFC;
+            border-radius: 5px;
+            box-shadow: #999999 0px 0px 4px -1px;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-self: center;
+            height: 40px;
+        }
+
+        #displayContainer {
+            height: 80px;
+            display: flex;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body>
-    <div id="display">
-        <img src="images/loading.gif" id="loader" />
-        <span id="loader_text">LOADING...</span>
+    <div id="displayContainer">
+        <div id="display">
+            <span id="loader_text"></span>
+            <img src="images/loading.gif" id="loader" />
+        </div>
     </div>
     <div id="container">
         <h1>Weather Service</h1>
@@ -131,32 +141,13 @@
             $('#refresh_btn_enabled').addClass('hide');
         })
 
-        // Constructor function to detect the completion of all ajax web service calls.
-        function MyRequestsCompleted(options) {
-            var numRequestToComplete,
-                requestsCompleted
-
-            if (!options) options = {};
-
-            numRequestToComplete = options.numRequest || 0
-            requestsCompleted = 0
-
-            var fireCallback = function () {
-                // Hide the loader and loader text
-                $('#display').hide();
-
-                $('#refresh_btn_enabled').removeClass('hide');
-                $('#refresh_btn_disabled').addClass('hide');
-            };
-
-            this.requestComplete = function (isComplete) {
-                if (isComplete) requestsCompleted++;
-                if (requestsCompleted == numRequestToComplete) fireCallback();
-            }
-        };
-
         // Displays client-side time
         function display_ct_loc() {
+            $('#loader_text').text("Retrieving weather forecast")
+            // Show display with loader and loader text
+            $('#display').show();
+            $('#temp, #rainfall, #humidity, #wind_dir, #wind_spd, #area, #forecast').empty();
+
             var x = new Date();
             // changing the display to UTC string
             var x1 = x.toUTCString();
@@ -166,25 +157,42 @@
             //set the fontcolor to '#0030c0';
             $('#ct').css('color', '#0030c0')
 
-            getLocation(x1, getWeather);
+            checkLocationService(x1, getWeather);
+        }
+
+
+        //Check if location service is enabled
+        function checkLocationService(x1, getWeather) {
+            let isLocationOn = false
+            navigator.geolocation.getCurrentPosition(function (position) {
+                isLocationOn = true;
+                getLocation(x1, getWeather, isLocationOn);
+            }, function (error) {
+                switch (error.code) {
+                    case 1:
+                        console.log("PERMISSION DENIED");
+                        break;
+                    case 2:
+                        console.log("POSITION_UNAVAILABLE");
+                        break;
+                    case 3:
+                        console.log("TIMEOUT");
+                        break;
+                    }
+                    getLocation(x1, getWeather, isLocationOn);
+            })
         }
 
         // Get latitude and longitude of current location
-        function getLocation(dt, callback) {
+        function getLocation(dt, callback, locationEnabled) {
+            console.log(locationEnabled);
             var posArr = [];
             var lat, lon;
-
-            // Wait for the completion of 7 asynchronous requests before firing callback
-            requestCallback = new MyRequestsCompleted({
-                numRequest: 7
-            });
-            // Show display with loader and loader text
-            $('#display').show();
-            $('#temp, #rainfall, #humidity, #wind_dir, #wind_spd, #forecast').empty();
-
-            if (navigator.geolocation) {
+            
+            if (locationEnabled) {
                 // Get latitude and longitude of current position
                 navigator.geolocation.getCurrentPosition(function (position) {
+                    console.log(position);
                     lat = position.coords.latitude;
                     lon = position.coords.longitude;
                     posArr.push(lat, lon);
@@ -196,8 +204,245 @@
                 lat = 1.31055;
                 lon = 103.8365;
                 posArr.push(lat, lon);
-                callback(x1, posArr)
+                callback(dt, posArr)
             }
+        }
+
+
+        // Gets current air temperature, rainfall, relative humidity, wind direction and wind speed across Singapore and the weather forecast.
+        function getWeather(data, posArr) {
+            // Gets current air temperature
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/air-temperature',
+                contentType: 'application/json; charset=utf-8',
+                data: data,
+                timeout: 15000,
+            }).done(function (response) {
+
+                $('#loader_text').text("Air temperature retrieved. Just 5 more to go")
+
+                // Get nearest station
+                var stations = response.metadata.stations;
+                myStation = getNearestStation(posArr, stations);
+
+                // Get temperature unit
+                var temp_unit;
+                if (response.metadata.reading_unit === "deg C") {
+                    // degree celsius symbol
+                    temp_unit = "&#x2103;";
+                } else {
+                    // degree fahrenheit symbol
+                    temp_unit = "&#x2109;";
+                }
+
+                // Get temperature
+                var readings = response.items[0].readings;
+                var tempVal = getStationReading(myStation, readings);
+
+                // Display temperature
+                $('#temp').html('Temperature: ' + tempVal.toString().concat(temp_unit));
+
+                getCurrentRainfall(data, posArr);
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR);
+                if (textStatus === 'timeout') {
+                    $('#loader_text').text("Connection timed out, failed to retrieve air temperature. Retrying")
+                    getWeather(data, posArr);
+                } else {
+                    $('#loader_text').text("An error occurred while retrieving air temperature. Retrying")
+                    getWeather(data, posArr);
+                }
+            })
+        }
+
+        function getCurrentRainfall(data, posArr) {
+            // Gets current rainfall
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/rainfall',
+                contentType: 'application/json; charset=utf-8',
+                data: data,
+                timeout: 15000,
+            }).done(function (response) {
+
+                $('#loader_text').text("Current rainfall retrieved. Grab a snack, 4 more to go")
+
+                // Get nearest station
+                var stations = response.metadata.stations;
+                myStation = getNearestStation(posArr, stations);
+
+                // Get rainfall
+                var readings = response.items[0].readings;
+                var rainfallVal = getStationReading(myStation, readings);
+
+                // Display Rainfall
+                $('#rainfall').html('Rainfall: ' + rainfallVal);
+
+                getRelativeHumidity(data, posArr);
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR);
+                if (textStatus === 'timeout') {
+                    $('#loader_text').text("Connection timed out, failed to retrieve current rainfall. Retrying")
+                    getCurrentRainfall(data, posArr);
+                } else {
+                    $('#loader_text').text("An error occurred while retrieving current rainfall. Retrying")
+                    getCurrentRainfall(data, posArr);
+                }
+            })
+        }
+
+        function getRelativeHumidity(data, posArr) {
+            // Get relative humidity
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/relative-humidity',
+                contentType: 'application/json; charset=utf-8',
+                data: data,
+                timeout: 15000,
+            }).done(function (response) {
+
+                $('#loader_text').text("Relative humidity retrieved. Nom nom, 3 more left")
+
+                // Get nearest station
+                var stations = response.metadata.stations;
+                myStation = getNearestStation(posArr, stations);
+
+                // Get relative humidity
+                var readings = response.items[0].readings;
+                var humidityVal = getStationReading(myStation, readings);
+
+                // Display relative humidity
+                $('#humidity').html('Relative Humidity: ' + humidityVal + '&#37;');
+
+                getWindDirection(data, posArr)
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR);
+                if (textStatus === 'timeout') {
+                    $('#loader_text').text("Connection timed out, failed to retrieve relative humidity. Retrying")
+                    getRelativeHumidity(data, posArr);
+                } else {
+                    $('#loader_text').text("An error occurred while retrieving relative humidity. Retrying")
+                    getRelativeHumidity(data, posArr);
+                }
+            })
+        }
+
+        function getWindDirection(data, posArr) {
+            // Get wind direction
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/wind-direction',
+                contentType: 'application/json; charset=utf-8',
+                data: data,
+                timeout: 15000,
+            }).done(function (response) {
+                $('#loader_text').text("Wind direction retrieved. Almost there, 2 left")
+
+                // Get nearest station
+                var stations = response.metadata.stations;
+                myStation = getNearestStation(posArr, stations);
+
+                // Get wind direction
+                var readings = response.items[0].readings;
+                var windDirVal = getStationReading(myStation, readings);
+
+                // Display wind direction
+                $('#wind_dir').html('Wind Direction: ' + windDirVal + '&#176;');
+
+                getWindSpeed(data, posArr);
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR);
+                if (textStatus === 'timeout') {
+                    $('#loader_text').text("Connection timed out, failed to retrieve wind direction. Retrying")
+                    getWindDirection(data, posArr);
+                } else {
+                    $('#loader_text').text("An error occurred while retrieving wind direction. Retrying")
+                    getWindDirection(data, posArr);
+                }
+            })
+        }
+
+        function getWindSpeed(data, posArr) {
+            // Get wind speed
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/wind-speed',
+                contentType: 'application/json; charset=utf-8',
+                data: data,
+                timeout: 15000,
+            }).done(function (response) {
+
+                $('#loader_text').text("Wind speed retrieved. You still here? Retrieving final reading")
+
+                // Get nearest station
+                var stations = response.metadata.stations;
+                myStation = getNearestStation(posArr, stations);
+
+                // Get relative humidity
+                var readings = response.items[0].readings;
+                var windSpdVal = getStationReading(myStation, readings);
+
+                // Display wind speed
+                $('#wind_spd').html('Wind Speed: ' + windSpdVal + 'kn');
+
+                getTwoHourForecast(data, posArr);
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR);
+                if (textStatus === 'timeout') {
+                    $('#loader_text').text("Connection timed out, failed to retrieve wind speed. Retrying")
+                    getWindSpeed(data, posArr);
+                } else {
+                    $('#loader_text').text("An error occurred while retrieving wind speed. Retrying")
+                    getWindSpeed(data, posArr);
+                }
+            })
+        }
+
+        function getTwoHourForecast(data, posArr) {
+            // Gets 2hr weather forecast
+            $.ajax({
+                type: 'GET',
+                url: 'https://api.data.gov.sg/v1/environment/2-hour-weather-forecast',
+                contentType: 'application/json; charset=utf-8',
+                data: data,
+                timeout: 15000,
+            }).done(function (response) {
+
+                $('#loader_text').text("Forecast retrieved successfully. Thank you for waiting.")
+
+                // Get closest area
+                var areas = response.area_metadata;
+                myArea = getNearestArea(posArr, areas);
+
+                // Get forecast
+                var forecasts = response.items[0].forecasts;
+                var currentForecast = getWeatherForecast(myArea, forecasts);
+
+                // Display area and weather forecast
+                $('#area').html('Detected Area: ' + myArea.name);
+                $('#forecast').html('Current Forecast: ' + currentForecast);
+
+
+                $('#display').hide();
+                $('#refresh_btn_enabled').removeClass('hide');
+                $('#refresh_btn_disabled').addClass('hide');
+
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR);
+                if (textStatus === 'timeout') {
+                    $('#loader_text').text("Connection timed out, failed to retrieve 2hr forecast. Retrying")
+                    getTwoHourForecast(data, posArr);
+                } else {
+                    $('#loader_text').text("An error occurred while retrieving 2hr forecast. Retrying")
+                    getTwoHourForecast(data, posArr);
+                }
+            })
         }
 
         // Find the station closest to the user's location
@@ -290,168 +535,6 @@
             return forecast;
         }
 
-
-
-        // Gets current air temperature, rainfall, relative humidity, wind direction and wind speed across Singapore and the weather forecast.
-        function getWeather(data, posArr) {
-            // getLocation function completed
-            requestCallback.requestComplete(true);
-
-            // Gets current air temperature
-            $.ajax({
-                type: 'GET',
-                url: 'https://api.data.gov.sg/v1/environment/air-temperature',
-                contentType: 'application/json; charset=utf-8',
-                data: data
-            }).done(function (data) {
-                // Get nearest station
-                var stations = data.metadata.stations;
-                myStation = getNearestStation(posArr, stations);
-
-                // Get temperature unit
-                var temp_unit;
-                if (data.metadata.reading_unit === "deg C") {
-                    // degree celsius symbol
-                    temp_unit = "&#x2103;";
-                } else {
-                    // degree fahrenheit symbol
-                    temp_unit = "&#x2109;";
-                }
-
-                // Get temperature
-                var readings = data.items[0].readings;
-                var tempVal = getStationReading(myStation, readings);
-
-                // Display temperature
-                $('#temp').html('Temperature: ' + tempVal.toString().concat(temp_unit));
-
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                alert(jqXHR.responseText);
-            }).always(function () {
-                requestCallback.requestComplete(true);
-            });
-
-            // Gets current rainfall
-            $.ajax({
-                type: 'GET',
-                url: 'https://api.data.gov.sg/v1/environment/rainfall',
-                contentType: 'application/json; charset=utf-8',
-                data: data
-            }).done(function (data) {
-                // Get nearest station
-                var stations = data.metadata.stations;
-                myStation = getNearestStation(posArr, stations);
-
-                // Get rainfall
-                var readings = data.items[0].readings;
-                var rainfallVal = getStationReading(myStation, readings);
-
-                // Display Rainfall
-                $('#rainfall').html('Rainfall: ' + rainfallVal);
-
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                alert(jqXHR.responseText);
-            }).always(function () {
-                requestCallback.requestComplete(true);
-            });
-
-            // Get relative humidity
-            $.ajax({
-                type: 'GET',
-                url: 'https://api.data.gov.sg/v1/environment/relative-humidity',
-                contentType: 'application/json; charset=utf-8',
-                data: data
-            }).done(function (data) {
-                // Get nearest station
-                var stations = data.metadata.stations;
-                myStation = getNearestStation(posArr, stations);
-
-                // Get relative humidity
-                var readings = data.items[0].readings;
-                var humidityVal = getStationReading(myStation, readings);
-
-                // Display relative humidity
-                $('#humidity').html('Relative Humidity: ' + humidityVal + '&#37;');
-
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                alert(jqXHR.responseText);
-            }).always(function () {
-                requestCallback.requestComplete(true);
-            });
-
-            // Get wind direction
-            $.ajax({
-                type: 'GET',
-                url: 'https://api.data.gov.sg/v1/environment/wind-direction',
-                contentType: 'application/json; charset=utf-8',
-                data: data
-            }).done(function (data) {
-                // Get nearest station
-                var stations = data.metadata.stations;
-                myStation = getNearestStation(posArr, stations);
-
-                // Get wind direction
-                var readings = data.items[0].readings;
-                var windDirVal = getStationReading(myStation, readings);
-
-                // Display wind direction
-                $('#wind_dir').html('Wind Direction: ' + windDirVal + '&#176;');
-
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                alert(jqXHR.responseText);
-            }).always(function () {
-                requestCallback.requestComplete(true);
-            });
-
-            // Get wind speed
-            $.ajax({
-                type: 'GET',
-                url: 'https://api.data.gov.sg/v1/environment/wind-speed',
-                contentType: 'application/json; charset=utf-8',
-                data: data
-            }).done(function (data) {
-                // Get nearest station
-                var stations = data.metadata.stations;
-                myStation = getNearestStation(posArr, stations);
-
-                // Get relative humidity
-                var readings = data.items[0].readings;
-                var windSpdVal = getStationReading(myStation, readings);
-
-                // Display wind speed
-                $('#wind_spd').html('Wind Speed: ' + windSpdVal + 'kn');
-
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                alert(jqXHR.responseText);
-            }).always(function () {
-                requestCallback.requestComplete(true);
-            });
-
-            // Gets 2hr weather forecast
-            $.ajax({
-                type: 'GET',
-                url: 'https://api.data.gov.sg/v1/environment/2-hour-weather-forecast',
-                contentType: 'application/json; charset=utf-8',
-                data: data
-            }).done(function (data) {
-                // Get closest area
-                var areas = data.area_metadata;
-                myArea = getNearestArea(posArr, areas);
-
-                // Get forecast
-                var forecasts = data.items[0].forecasts;
-                var currentForecast = getWeatherForecast(myArea, forecasts);
-
-                // Display area and weather forecast
-                $('#area').html('Detected Area: ' + myArea.name);
-                $('#forecast').html('Current Forecast: ' + currentForecast);
-
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                alert(jqXHR.responseText);
-            }).always(function () {
-                requestCallback.requestComplete(true);
-            });
-        }
 
     </script>
 

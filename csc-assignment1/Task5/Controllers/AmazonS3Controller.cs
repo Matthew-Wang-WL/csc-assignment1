@@ -27,6 +27,7 @@ namespace Task5.Controllers
         public IHttpActionResult UploadToS3()
         {
             var file = HttpContext.Current.Request.Files[0];
+            var fileName = file.FileName;
 
             s3Client = new AmazonS3Client(
                 new AmazonS3Config
@@ -40,7 +41,7 @@ namespace Task5.Controllers
                 });
             
             Guid guid = Guid.NewGuid();
-            string key = "images/" + guid + "-" + file.FileName;
+            string key = "images/" + guid + "-" + fileName;
 
             try
             {
@@ -61,7 +62,10 @@ namespace Task5.Controllers
                 // Construct URL to the file
                 var fileURL = "https://" + bucketName + ".s3.amazonaws.com/" + key;
 
-                var shortURL = BitlyLink.shortenLink(fileURL).Result;
+                //Bitly
+                //var shortURL = BitlyLink.shortenLink(fileURL).Result;
+                //Rebrandly
+                var shortURL = Rebrandly.shortenLink(fileURL, fileName).Result;
 
                 return Ok(shortURL);
 
