@@ -8,9 +8,9 @@ namespace Task4.Controllers
 {
     public class HomeController : Controller
     {
-        public void Index()
+        public ActionResult Index()
         {
-            Response.Redirect("searchTalentStart", false);
+            return Redirect("searchTalentStart");
         }
     }
 }

@@ -56,9 +56,32 @@
     <Folder Include="app\templates\" />
     <Folder Include="app\templates\app\" />
     <Folder Include="ExtraTask\" />
+    <Folder Include="frontend\" />
+    <Folder Include="frontend\public\" />
+    <Folder Include="frontend\src\" />
+    <Folder Include="frontend\src\assets\" />
+    <Folder Include="frontend\src\components\" />
+    <Folder Include="frontend\src\router\" />
+    <Folder Include="frontend\src\store\" />
+    <Folder Include="frontend\src\views\" />
     <Folder Include="templates\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="frontend\.gitignore" />
+    <Content Include="frontend\babel.config.js" />
+    <Content Include="frontend\package-lock.json" />
+    <Content Include="frontend\package.json" />
+    <Content Include="frontend\public\favicon.ico" />
+    <Content Include="frontend\public\index.html" />
+    <Content Include="frontend\README.md" />
+    <Content Include="frontend\src\App.vue" />
+    <Content Include="frontend\src\assets\logo.png" />
+    <Content Include="frontend\src\components\HelloWorld.vue" />
+    <Content Include="frontend\src\main.js" />
+    <Content Include="frontend\src\router\index.js" />
+    <Content Include="frontend\src\store\index.js" />
+    <Content Include="frontend\src\views\About.vue" />
+    <Content Include="frontend\src\views\Home.vue" />
     <Content Include="requirements.txt" />
     <Content Include="db.sqlite3" />
     <Content Include="app\static\app\content\bootstrap.css" />
