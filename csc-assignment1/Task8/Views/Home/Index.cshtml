@@ -7,9 +7,12 @@
             <br />
             <img src="" id="preview">
             <br />
-            <input id="submit" type="button" value="Submit" name="submit" />
+            <input id="submit" type="button" value="Submit" name="Predict" />
+            <input id="submit2" type="button" value="ImageToText" name="ImageToText" />
             <br />
             <p id="link"></p>
+            <br />
+            <p id="link2"></p>
         </form>
     </div>
 </body>
@@ -17,6 +20,7 @@
 @section scripts {
 
     <script type="text/javascript">
+        //Predict
         $(document).ready(function () {
             $('#submit').click(function () {
                 var data = new FormData();
@@ -36,7 +40,26 @@
                 });
             });
         });
-
+        //Image to text
+        $(document).ready(function () {
+            $('#submit2').click(function () {
+                var data = new FormData();
+                var imageFile = document.getElementById("photo").files[0];
+                data.append('photo', imageFile);
+                $.ajax({
+                    url: '/api/computervision',
+                    processData: false,
+                    contentType: false,
+                    data: data,
+                    method: "POST",
+                    dataType: "json",
+                }).done(function (result) {
+                    $('#link2').text(result);
+                }).fail(function (a, b, c) {
+                    console.log(a, b, c);
+                });
+            });
+        });
         //Image preview after upload
         var fileTag = document.getElementById("photo"),
             preview = document.getElementById("preview");
