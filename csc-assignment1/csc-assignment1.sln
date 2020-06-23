@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task8", "Task8\Task8.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task3_Auth", "Task3_Auth\Task3_Auth.csproj", "{05E0CC19-4D6F-463D-AEFD-CEAF7590FC97}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "ExtraTask", "ExtraTask\ExtraTask.pyproj", "{2B3D9545-6511-4308-BD91-899362323D2D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{05E0CC19-4D6F-463D-AEFD-CEAF7590FC97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{05E0CC19-4D6F-463D-AEFD-CEAF7590FC97}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05E0CC19-4D6F-463D-AEFD-CEAF7590FC97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B3D9545-6511-4308-BD91-899362323D2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B3D9545-6511-4308-BD91-899362323D2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B3D9545-6511-4308-BD91-899362323D2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B3D9545-6511-4308-BD91-899362323D2D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

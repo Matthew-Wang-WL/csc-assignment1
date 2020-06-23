@@ -31,6 +31,23 @@ namespace Task4
             app.UseCookieAuthentication(new CookieAuthenticationOptions());
             app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);
 
+            //Ensure that https is used
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.IsSecure)
+                {
+                    await next();
+                }
+                else
+                {
+                    var uriBuilder = new UriBuilder(Uri.UriSchemeHttps + Uri.SchemeDelimiter + context.Request.Uri.GetComponents(UriComponents.AbsoluteUri & ~UriComponents.Scheme, UriFormat.SafeUnescaped));
+                    uriBuilder.Port = 44345;
+                    var withHttps = uriBuilder.Uri.AbsoluteUri;
+                    context.Response.Redirect(withHttps);
+                }
+            });
+
+
             // Configure the application for OAuth based flow
             PublicClientId = "self";
             OAuthOptions = new OAuthAuthorizationServerOptions
@@ -40,11 +57,12 @@ namespace Task4
                 AuthorizeEndpointPath = new PathString("/api/Account/ExternalLogin"),
                 AccessTokenExpireTimeSpan = TimeSpan.FromDays(14),
                 // In production mode set AllowInsecureHttp = false
-                AllowInsecureHttp = true
+                //AllowInsecureHttp = true
             };
 
             // Enable the application to use bearer tokens to authenticate users
             app.UseOAuthBearerTokens(OAuthOptions);
+
 
             // Uncomment the following lines to enable logging in with third party login providers
             //app.UseMicrosoftAccountAuthentication(

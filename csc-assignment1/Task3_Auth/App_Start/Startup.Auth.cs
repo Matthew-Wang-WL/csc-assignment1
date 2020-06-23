@@ -10,6 +10,7 @@ using Microsoft.Owin.Security.OAuth;
 using Owin;
 using Task3_Auth.Providers;
 using Task3_Auth.Models;
+using System.Diagnostics;
 
 namespace Task3_Auth
 {
@@ -30,6 +31,21 @@ namespace Task3_Auth
             // and to use a cookie to temporarily store information about a user logging in with a third party login provider
             app.UseCookieAuthentication(new CookieAuthenticationOptions());
             app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);
+
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.IsSecure)
+                {
+                    await next();
+                }
+                else
+                {
+                    var uriBuilder = new UriBuilder(Uri.UriSchemeHttps + Uri.SchemeDelimiter + context.Request.Uri.GetComponents(UriComponents.AbsoluteUri & ~UriComponents.Scheme, UriFormat.SafeUnescaped));
+                    uriBuilder.Port = 44306;
+                    var withHttps = uriBuilder.Uri.AbsoluteUri;
+                    context.Response.Redirect(withHttps);
+                }
+            });
 
             // Configure the application for OAuth based flow
             PublicClientId = "self";

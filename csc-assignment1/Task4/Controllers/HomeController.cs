@@ -8,11 +8,9 @@ namespace Task4.Controllers
 {
     public class HomeController : Controller
     {
-        public ActionResult Index()
+        public void Index()
         {
-            ViewBag.Title = "Home Page";
-
-            return View();
+            Response.Redirect("searchTalentStart", false);
         }
     }
 }
