@@ -349,3 +349,4 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 /csc-assignment1/ExtraTask/env
+/csc-assignment1/ExtraTask/frontend/webpack-stats.json

@@ -61,6 +61,7 @@
     <Folder Include="frontend\src\" />
     <Folder Include="frontend\src\assets\" />
     <Folder Include="frontend\src\components\" />
+    <Folder Include="frontend\src\plugins\" />
     <Folder Include="frontend\src\router\" />
     <Folder Include="frontend\src\store\" />
     <Folder Include="frontend\src\views\" />
@@ -78,10 +79,13 @@
     <Content Include="frontend\src\assets\logo.png" />
     <Content Include="frontend\src\components\HelloWorld.vue" />
     <Content Include="frontend\src\main.js" />
+    <Content Include="frontend\src\plugins\vuetify.js" />
     <Content Include="frontend\src\router\index.js" />
     <Content Include="frontend\src\store\index.js" />
     <Content Include="frontend\src\views\About.vue" />
     <Content Include="frontend\src\views\Home.vue" />
+    <Content Include="frontend\vue.config.js" />
+    <Content Include="frontend\webpack-stats.json" />
     <Content Include="requirements.txt" />
     <Content Include="db.sqlite3" />
     <Content Include="app\static\app\content\bootstrap.css" />
