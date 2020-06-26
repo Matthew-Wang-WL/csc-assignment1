@@ -1,10 +1,12 @@
 <template>
     <v-container>
         <v-container class="d-flex justify-center">
+            <img v-if="fileUrl" :src="fileUrl" />
             <v-file-input
                 v-model="file"
                 accept="image/*"
                 label="Select an image..."
+                @change="onFileChange"
             ></v-file-input>
             <v-btn color="primary" @click="onUpload" class="ml-8">Upload</v-btn>
         </v-container>
@@ -21,12 +23,14 @@
 
 <script>
 import axios from 'axios';
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
 
 export default {
     name: 'ImageUpload',
 
     data: () => ({
         file: null,
+        fileUrl: null,
         logs: [],
         headers: [
             { text: 'ID', value: 'id' },
@@ -39,8 +43,20 @@ export default {
         this.fetchRecords();
     },
     methods: {
+        onFileChange: (e) => {
+            if (this.file != null) {
+                this.fileUrl = URL.createObjectURL(this.file);
+            }
+        },
         onUpload() {
             if (this.file != null) {
+                const image = document.getElementById('image');
+                cocoSsd
+                    .load()
+                    .then(model => model.detect(image))
+                    .then(predictions => console.log(predictions));
+                /*
+                // Send results to api to store in database
                 let formData = new formData();
                 formData.append('file', this.file, this.file.name);
 
@@ -59,7 +75,7 @@ export default {
                     .catch(response => {
                         //display error message
                         console.log(response);
-                    });
+                    });*/
             } else {
                 //display error message
             }
