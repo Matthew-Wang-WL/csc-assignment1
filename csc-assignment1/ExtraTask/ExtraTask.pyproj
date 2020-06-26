@@ -4,7 +4,7 @@
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <Name>ExtraTask</Name>
     <RootNamespace>ExtraTask</RootNamespace>
-    <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|env1|$(MSBuildProjectFullPath)</InterpreterId>
     <TestFramework>Pytest</TestFramework>
     <SuppressConfigureTestFrameworkPrompt>true</SuppressConfigureTestFrameworkPrompt>
   </PropertyGroup>
@@ -33,12 +33,27 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="api\checker\views.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="api\logs\serializers.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="api\logs\views.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="app\forms.py" />
     <Compile Include="app\models.py" />
     <Compile Include="app\tests.py" />
     <Compile Include="app\views.py" />
     <Compile Include="app\__init__.py" />
     <Compile Include="app\migrations\__init__.py" />
+    <Compile Include="ExtraTask\forms.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ExtraTask\models.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="manage.py" />
     <Compile Include="ExtraTask\__init__.py" />
     <Compile Include="ExtraTask\settings.py" />
@@ -46,6 +61,9 @@
     <Compile Include="ExtraTask\wsgi.py" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="api\logs\" />
+    <Folder Include="api\checker\" />
+    <Folder Include="api\slack\" />
     <Folder Include="app\" />
     <Folder Include="app\migrations\" />
     <Folder Include="app\static\" />
@@ -65,6 +83,7 @@
     <Folder Include="frontend\src\router\" />
     <Folder Include="frontend\src\store\" />
     <Folder Include="frontend\src\views\" />
+    <Folder Include="api\" />
     <Folder Include="templates\" />
   </ItemGroup>
   <ItemGroup>
@@ -124,10 +143,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Interpreter Include="env\">
-      <Id>env</Id>
+    <Interpreter Include="env1\">
+      <Id>env1</Id>
       <Version>3.7</Version>
-      <Description>env (Python 3.7 (64-bit))</Description>
+      <Description>env1 (Python 3.7 (64-bit))</Description>
       <InterpreterPath>Scripts\python.exe</InterpreterPath>
       <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
       <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
