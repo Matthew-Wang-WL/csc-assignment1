@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -31,7 +32,6 @@ namespace Task8.Controllers
             var uriBase = endpoint + "/vision/v3.0//read/analyze";
             //Retrieve file
             var file = HttpContext.Current.Request.Files[0];
-            //Convert hhtpfile into string
             //Convert hhtpfile into byte array
             byte[] fileData = null;
             using (var binaryReader = new BinaryReader(file.InputStream))
@@ -117,9 +117,9 @@ namespace Task8.Controllers
 
                 // Display the JSON response.
                 Console.WriteLine(contentString);
-                var results = JToken.Parse(contentString).ToString();
-
-                return Ok(results);
+                //var results = JToken.Parse(contentString).ToString();
+                
+                return Ok(JObject.Parse(contentString));
             }
             catch (Exception e)
             {
@@ -128,69 +128,69 @@ namespace Task8.Controllers
             }
         }
 
-        //with Computer Vision - OCR
-        [HttpPost]
-        [Route("api/computervision2")]
-        public async Task<IHttpActionResult> ImageToTextOCR()
-        {
-            // Add your Computer Vision subscription key and endpoint to your environment variables.
-            var subscriptionKey = "f0219c2bfa7f4012879cefd629250760";
+        //with Computer Vision - OCR (Not using)
+        //[HttpPost]
+        //[Route("api/computervision2")]
+        //public async Task<IHttpActionResult> ImageToTextOCR()
+        //{
+        //    // Add your Computer Vision subscription key and endpoint to your environment variables.
+        //    var subscriptionKey = "f0219c2bfa7f4012879cefd629250760";
 
-            // An endpoint should have a format like "https://westus.api.cognitive.microsoft.com"
-            var endpoint = "https://csc-task8.cognitiveservices.azure.com";
+        //    // An endpoint should have a format like "https://westus.api.cognitive.microsoft.com"
+        //    var endpoint = "https://csc-task8.cognitiveservices.azure.com";
 
-            // the Batch Read method endpoint
-            var uriBase = endpoint + "/vision/v2.1/ocr";
-            //Retrieve file
-            var file = HttpContext.Current.Request.Files[0];
-            //Convert hhtpfile into string
-            //Convert hhtpfile into byte array
-            byte[] fileData = null;
-            using (var binaryReader = new BinaryReader(file.InputStream))
-            {
-                fileData = binaryReader.ReadBytes(file.ContentLength);
-            }
+        //    // the Batch Read method endpoint
+        //    var uriBase = endpoint + "/vision/v2.1/ocr";
+        //    //Retrieve file
+        //    var file = HttpContext.Current.Request.Files[0];
+        //    //Convert hhtpfile into string
+        //    //Convert hhtpfile into byte array
+        //    byte[] fileData = null;
+        //    using (var binaryReader = new BinaryReader(file.InputStream))
+        //    {
+        //        fileData = binaryReader.ReadBytes(file.ContentLength);
+        //    }
 
-            try
-            {
-                HttpClient client = new HttpClient();
+        //    try
+        //    {
+        //        HttpClient client = new HttpClient();
 
-                // Request headers.
-                client.DefaultRequestHeaders.Add(
-                    "Ocp-Apim-Subscription-Key", subscriptionKey);
+        //        // Request headers.
+        //        client.DefaultRequestHeaders.Add(
+        //            "Ocp-Apim-Subscription-Key", subscriptionKey);
 
-                var requestParameters = "language=unk&detectOrientation=true";
-                var url = uriBase + "?" + requestParameters;
+        //        var requestParameters = "language=unk&detectOrientation=true";
+        //        var url = uriBase + "?" + requestParameters;
 
-                HttpResponseMessage response;
+        //        HttpResponseMessage response;
 
-                // Adds the byte array as an octet stream to the request body.
-                using (ByteArrayContent content = new ByteArrayContent(fileData))
-                {
-                    // This example uses the "application/octet-stream" content type.
-                    // The other content types you can use are "application/json"
-                    // and "multipart/form-data".
-                    content.Headers.ContentType =
-                        new MediaTypeHeaderValue("application/octet-stream");
+        //        // Adds the byte array as an octet stream to the request body.
+        //        using (ByteArrayContent content = new ByteArrayContent(fileData))
+        //        {
+        //            // This example uses the "application/octet-stream" content type.
+        //            // The other content types you can use are "application/json"
+        //            // and "multipart/form-data".
+        //            content.Headers.ContentType =
+        //                new MediaTypeHeaderValue("application/octet-stream");
 
-                    // The first REST API method, Batch Read, starts
-                    // the async process to analyze the written text in the image.
-                    response = await client.PostAsync(url, content);
-                }
+        //            // The first REST API method, Batch Read, starts
+        //            // the async process to analyze the written text in the image.
+        //            response = await client.PostAsync(url, content);
+        //        }
 
-                // Asynchronously get the JSON response.
-                string contentString = await response.Content.ReadAsStringAsync();
+        //        // Asynchronously get the JSON response.
+        //        string contentString = await response.Content.ReadAsStringAsync();
 
-                // Display the JSON response.
-                Console.WriteLine("\nResponse:\n\n{0}\n",
-                    JToken.Parse(contentString).ToString());
-                return Ok(contentString);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("\n" + e.Message);
-                return BadRequest();
-            }
-        }        
+        //        // Display the JSON response.
+        //        Console.WriteLine("\nResponse:\n\n{0}\n",
+        //            JToken.Parse(contentString).ToString());
+        //        return Ok(contentString);
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        Console.WriteLine("\n" + e.Message);
+        //        return BadRequest();
+        //    }
+        //}        
     }
 }

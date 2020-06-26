@@ -6,6 +6,38 @@
     <title>@ViewBag.Title</title>
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
+    <style>
+        #loader {
+            width: 10%;
+        }
+
+        #loader_text {
+            color: #1d3f72;
+            font-weight: 100;
+            font-size: 1.1em;
+            padding: 10px;
+            display: flex;
+            align-self: center;
+        }
+
+        #display {
+            margin: 0 auto;
+            background: #FCFCFC;
+            border-radius: 5px;
+            box-shadow: #999999 0px 0px 4px -1px;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-self: center;
+            height: 40px;
+        }
+
+        #displayContainer {
+            height: 80px;
+            display: flex;
+            margin: 0 auto;
+        }
+    </style>
 </head>
 <body>
     <div class="navbar navbar-inverse navbar-fixed-top">

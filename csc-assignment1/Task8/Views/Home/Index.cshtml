@@ -1,5 +1,4 @@
-﻿<body>
-    <div class="container">
+﻿<div class="container">
         <h1>Image Recognition Demo</h1>
         <form>
             <h2>Upload Image</h2>
@@ -14,15 +13,25 @@
             <br />
             <p id="link2"></p>
         </form>
+</div>
+<br/>
+    <div id="displayContainer">
+    <div id="display">
+        <span id="loader_text"></span>
+        <img src="~/images/loading.gif" id="loader" />
     </div>
-</body>
+</div>
 
 @section scripts {
 
     <script type="text/javascript">
+        
         //Predict
         $(document).ready(function () {
+            $('#display').hide();
             $('#submit').click(function () {
+                $('#display').show();
+                $('#loader_text').text("Checking image");
                 var data = new FormData();
                 var imageFile = document.getElementById("photo").files[0];
                 data.append('photo', imageFile);
@@ -34,15 +43,17 @@
                     method: "POST",
                     dataType: "json",
                 }).done(function (result) {
+                    $('#display').hide();
                     $('#link').text(result);
-                }).fail(function (a, b, c) {
-                    console.log(a, b, c);
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                    $('#display').hide();
+                    console.log(jqXHR, textStatus, errorThrow);
                 });
             });
-        });
-        //Image to text
-        $(document).ready(function () {
+            //Image to text
             $('#submit2').click(function () {
+                $('#display').show();
+                $('#loader_text').text("Converting to text");
                 var data = new FormData();
                 var imageFile = document.getElementById("photo").files[0];
                 data.append('photo', imageFile);
@@ -54,12 +65,25 @@
                     method: "POST",
                     dataType: "json",
                 }).done(function (result) {
-                    $('#link2').text(result);
-                }).fail(function (a, b, c) {
-                    console.log(a, b, c);
+                    $('#display').hide();
+                    console.log(result);
+
+                    var lines = result.analyzeResult.readResults[0].lines;
+                    console.log(lines);
+
+                    var contentStr = "";
+                    lines.forEach(line => {
+                        contentStr += line.text + "\<br>";
+                    });
+                    var p = document.getElementById("link2");
+                    p.innerHTML = contentStr;
+                }).fail(function (jqXHR, textStatus, errorThrow) {
+                    $('#display').hide();
+                    console.log(jqXHR, textStatus, errorThrow);
                 });
             });
         });
+       
         //Image preview after upload
         var fileTag = document.getElementById("photo"),
             preview = document.getElementById("preview");
