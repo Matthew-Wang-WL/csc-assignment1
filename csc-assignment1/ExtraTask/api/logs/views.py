@@ -11,9 +11,11 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView 
 from ExtraTask.models import details, log
+from ExtraTask.forms import ImageUploadForm
 from .serializers import LogsSerializer 
 from django.shortcuts import render, render_to_response
 from django.contrib.sites.shortcuts import get_current_site
+import slack
 import requests
 
 # Initialize Mongodb file configuration 
@@ -43,7 +45,8 @@ class LogsView(APIView):
                     # initialize variables
                     viewlog.id = eachLog.id
                     viewlog.time = "{0} , {1}".format(date , time)   
-                    viewlog.hardHatDetected = eachLog.hardHatDetected
+                    viewlog.objectDetected = eachLog.objectDetected
+                    viewlog.score = eachLog.score
 
                     # add object to list
                     items.append(viewlog) 
@@ -59,65 +62,50 @@ class LogsView(APIView):
         # return succes response
         content ={"Success": serializer.data}
         return Response(content,status=status.HTTP_200_OK)
-
+   
     def post(self, request):        
         #initialize variables of form
          form = ImageUploadForm(request.POST, request.FILES) 
          if form.is_valid():
               
-             #initialize variables to add into object  
-             image = form.cleaned_data['image']  
-             objectsDetected = form.cleaned_data['objectsDetected']   
-             objectsViolated = form.cleaned_data['objectsViolated']   
+             #initialize variables to add into object
+             objectDetected = form.cleaned_data['objectDetected']  
+             score = form.cleaned_data['score']   
              time = datetime.datetime.now()
 
              try :
-                 # add image to database
-                 stored = fs.put(image,timestamp = time ) 
-                 storedlogId = str(stored) 
               # create log object to store details
-                 logentry = log ()
-                 logentry.image= storedlogId 
-                 logentry.objectsViolated = objectsViolated 
-                 logentry.objectsDetected = objectsDetected  
+                 logentry = log()
+                 logentry.objectDetected = objectDetected
+                 logentry.score = score
+                 logentry.time = time
                  #save log to database
                  logentry.save()
 
-                 if not logentry.objectsViolated :
-                     #return success response
-                     content = {"Success": "Log is saved " } 
-                     return Response (content ,status=status.HTTP_200_OK )
-                 else :
-                     try :
-                         date = logentry.time.strftime("%d-%m-%y") 
-                         time =logentry.time.strftime("%H:%M") 
-                         violatedObjects = getobjectstring (logentry.objectsViolated)
-                         data = {'text':'A violation as occured at {0} : {1} and the following PPE was violated {2}'.format(date,time,violatedObjects) } 
-                         # Initialize URL
-                         baseurl = request.get_host()
-                         url = 'http://'+baseurl+'/api/slack/send_message/'
-                         # send response
-                         response = requests.get(url, data = data)
-                         # check response
-                         if response.status_code == 200 :
-                             # return success response
-                             content = {"Success": "Log is saved and message sent to manager " } 
-                             return Response (content ,status=status.HTTP_200_OK )
-                         else :
-                             # raise error if action wasnt successful
-                             raise Exception(response.content)
-                     except :
-                         # return error response
-                         content = {"Success": "Log is saved and  error while sending message to safety manager " } 
-                         return Response (content ,status=status.HTTP_400_BAD_REQUEST )
+                 date = logentry.time.strftime("%d-%m-%y") 
+                 time =logentry.time.strftime("%H:%M") 
+                 object = getobjectstring (logentry.objectDetected)
 
-             except :
-                 # return error response
-                 content = { "Error" :  "Error occured" }
-                 return  Response (content ,status=status.HTTP_400_BAD_REQUEST )
+                 #Slack message
+                 text = {'text':'{2} detected at {0} : {1}'.format(date,time,object) } 
+                 # get all slack credentials
+                 accessTokens = 'xoxb-1204644572997-1229905883280-MykozGkYHsQE3pJZ0ZjEQ7cY'
+                 channels = 'C0162709R2P'
+                 # publish message 
+                 client = slack.WebClient(accessTokens)
+                 client.chat_postMessage(channels, text=text )
+                
+                 # check response
+                 if response.status_code == 200 :
+                    # return success response
+                    content = {"Success": "Log is saved and message sent to manager " } 
+                    return Response(content ,status=status.HTTP_200_OK)
+                 else :
+                    # return error response
+                    content = { "Error" :  "Error occured" }
+                    return  Response(content ,status=status.HTTP_400_BAD_REQUEST)
              
          else : 
              #  return error response if form is invalid
-             content ={"Form is invalid. Add an image , violated ppe equipment or  detected ppe equipment"}
-             return  Response (content ,status=status.HTTP_400_BAD_REQUEST )
-
+             content = {"Form is invalid"}
+             return  Response(content ,status=status.HTTP_400_BAD_REQUEST)

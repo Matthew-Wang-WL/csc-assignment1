@@ -54,3 +54,4 @@ Werkzeug==1.0.1
 wheel==0.34.2
 wrapt==1.12.1
 zipp==3.1.0
+slack==0.0.2

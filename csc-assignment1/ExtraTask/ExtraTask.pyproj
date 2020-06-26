@@ -63,7 +63,6 @@
   <ItemGroup>
     <Folder Include="api\logs\" />
     <Folder Include="api\checker\" />
-    <Folder Include="api\slack\" />
     <Folder Include="app\" />
     <Folder Include="app\migrations\" />
     <Folder Include="app\static\" />

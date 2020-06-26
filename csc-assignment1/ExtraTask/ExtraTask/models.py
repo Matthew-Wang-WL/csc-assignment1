@@ -6,6 +6,9 @@ from ExtraTask import settings
 
 class log(models.Model):
     time = models.DateTimeField(auto_now=True) 
-    hardHatDetected= models.CharField(max_length=100)
+    objectDetected= models.CharField(max_length=100)
+    score = models.DecimalField(max_digits=3, decimal_places=2)
     objects = models.DjongoManager()
 
+class details:
+    pass
