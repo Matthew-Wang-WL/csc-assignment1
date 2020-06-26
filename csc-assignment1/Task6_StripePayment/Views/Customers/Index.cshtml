@@ -12,7 +12,7 @@
             <div class="text-danger"></div>
             <div class="form-group">
                 <label class="control-label"></label>
-                <input id="nameInput" name="nameInput"  class="form-control" />
+                <input id="nameInput" name="nameInput" class="form-control" />
                 <span class="text-danger"></span>
             </div>
             <div class="form-group">
@@ -29,10 +29,18 @@
 
 <h2 id="creationText"></h2>
 
+<br />
+<div id="displayContainer">
+    <div id="display">
+        <span id="loader_text"></span>
+        <img src="~/loaders/loading.gif" id="loader" />
+    </div>
+</div>
+
 @section Scripts {
     <script>
         $(document).ready(function () {
-
+            $('#display').hide();
             //// Declare validation methods and rules
             //Validate name
             $.validator.addMethod('validName', function (value, element) {
@@ -70,6 +78,8 @@
 
             // Submit form
             $('#submitBtn').on("click", function () {
+                $('#display').show();
+                $('#loader_text').text('Creating your account')
                 $('#creationText').text('')
                 //Validate form
                 if ($('#customerForm').valid()) {
@@ -90,7 +100,7 @@
                         data: webFormData,
                         contentType: 'application/x-www-form-urlencoded',
                     }).done(function (response) {
-
+                        $('#display').hide();
                         let custId = response.customerId
 
                         //Create a cookie to store the customerId for use in other Stripe services
@@ -102,11 +112,12 @@
                         window.location.href = '../Subscriptions'
 
                     }).fail(function (jqXHR, textStatus, errorThrown) {
+                        $('#display').hide();
                         $('#creationText').text('Failed to create account.')
                     });
                 }
             });
-               
+
         })
     </script>
 }

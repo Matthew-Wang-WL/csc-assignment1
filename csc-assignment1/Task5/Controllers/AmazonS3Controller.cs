@@ -26,25 +26,26 @@ namespace Task5.Controllers
         [Route("api/amazons3")]
         public IHttpActionResult UploadToS3()
         {
-            var file = HttpContext.Current.Request.Files[0];
-            var fileName = file.FileName;
-
-            s3Client = new AmazonS3Client(
-                new AmazonS3Config
-                {
-                    // Retries and Timeouts
-                    Timeout = TimeSpan.FromSeconds(10),
-                    ReadWriteTimeout = TimeSpan.FromSeconds(20),
-                    MaxErrorRetry = 5,
-
-                    RegionEndpoint = bucketRegion
-                });
-            
-            Guid guid = Guid.NewGuid();
-            string key = "images/" + guid + "-" + fileName;
-
             try
             {
+                var file = HttpContext.Current.Request.Files[0];
+                var fileName = file.FileName;
+
+                s3Client = new AmazonS3Client(
+                    new AmazonS3Config
+                    {
+                    // Retries and Timeouts
+                    Timeout = TimeSpan.FromSeconds(10),
+                        ReadWriteTimeout = TimeSpan.FromSeconds(20),
+                        MaxErrorRetry = 5,
+
+                        RegionEndpoint = bucketRegion
+                    });
+
+                Guid guid = Guid.NewGuid();
+                string key = "images/" + guid + "-" + fileName;
+
+
                 var request = new PutObjectRequest
                 {
                     BucketName = bucketName,

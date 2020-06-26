@@ -51,9 +51,19 @@ flex-direction:column;" class="row mt-3">
 </div>
 <h2 id="subscriptionStatus"></h2>
 
+<br />
+<div id="displayContainer">
+    <div id="display">
+        <span id="loader_text"></span>
+        <img src="~/loaders/loading.gif" id="loader" />
+    </div>
+</div>
+
 @section Scripts {
     <script>
         $(document).ready(function () {
+            $('#loader_text').text("Loading subscription plans");
+            $('#display').show();
             $('#paymentContainer').hide();
             var name = ""
             var priceId = ""
@@ -86,6 +96,8 @@ flex-direction:column;" class="row mt-3">
                 url: '/api/subscriptions/get',
                 type: 'GET',
             }).done(function (response) {
+                $('#display').hide();
+
                 let index = [0, 1, 3];
                 $('.h1').each(function (i, obj) {
                     obj.innerHTML = response[index[i]].amount / 100 + " " + response[i].currency.toUpperCase() + " / " + response[index[i]].interval;
@@ -97,6 +109,7 @@ flex-direction:column;" class="row mt-3">
                 //monthly plan id
                 monthly = response[3].id
             }).fail(function (jqXHR, textStatus, errorThrown) {
+                $('#display').hide();
                 console.log(jqXHR);
             });
 
@@ -161,6 +174,7 @@ flex-direction:column;" class="row mt-3">
                     })
                     .then((result) => {
                         if (result.error) {
+                            $('#display').hide();
                             displayError(error);
                         } else {
                             createSubscription({
@@ -193,6 +207,7 @@ flex-direction:column;" class="row mt-3">
                         // If the card is declined, display an error to the user.
                         .then((result) => {
                             if (result.error) {
+                                $('#display').hide();
                                 // The card had an error when trying to attach it to a customer.
                                 throw result;
                             }
@@ -210,6 +225,7 @@ flex-direction:column;" class="row mt-3">
                         // No more actions required. Provision your service for the user.
                         .then(onSubscriptionComplete)
                         .catch((error) => {
+                            $('#display').hide();
                             // An error has happened. Display the failure to the user here.
                             // We utilize the HTML element we created.
                             showCardError(error);
@@ -220,6 +236,7 @@ flex-direction:column;" class="row mt-3">
             function onSubscriptionComplete(result) {
                 // Payment was successful.
                 if (result.subscription.status === 'active') {
+                    $('#display').hide();
                     $('#subscriptionStatus').text("You have successfully subscribed to the " + name + " plan")
                     document.cookie = 'subscriptionId=' + result.subscription.id
                     document.cookie = 'subscriptionType=' + result.subscription.plan.interval
@@ -228,6 +245,8 @@ flex-direction:column;" class="row mt-3">
             }
 
             $('#subscribeBtn').on('click', function () {
+                $('#display').show();
+                $('#loader_text').text('Processing payment')
                 event.preventDefault();
                 let custId = getCookie("custId");
                 let selectedDate = $('#datePicker').val();
