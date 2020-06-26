@@ -1,7 +1,7 @@
 <template>
     <v-app>
         <v-app-bar app color="primary" dark class="justify-center d-flex">
-            <span>HARD HAT DETECTION</span>
+            <span>OBJECT DETECTION</span>
         </v-app-bar>
 
         <v-main>

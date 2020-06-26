@@ -3,4 +3,6 @@ from django import forms
 from django.forms import ModelForm
 
 class ImageUploadForm(forms.Form):
-        image = forms.ImageField()
+        objectDetected  = forms.CharField()
+        score = forms.DecimalField()
+

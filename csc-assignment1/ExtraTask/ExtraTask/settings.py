@@ -85,7 +85,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'djongo',
         'NAME': 'ExtraTask',
-        'HOST': 'mongodb+srv://csc_user:admin@extratask-d0sjm.mongodb.net/test?retryWrites=true&w=majority',
+        'HOST': 'mongodb://csc_user:admin@extratask-shard-00-00-d0sjm.mongodb.net:27017,extratask-shard-00-01-d0sjm.mongodb.net:27017,extratask-shard-00-02-d0sjm.mongodb.net:27017/test?ssl=true&replicaSet=ExtraTask-shard-0&authSource=admin&retryWrites=true&w=majority',
     }
 }
 
