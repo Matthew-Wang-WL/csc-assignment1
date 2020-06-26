@@ -36,8 +36,8 @@ export default {
         logs: [],
         headers: [
             { text: 'ID', value: 'id' },
-            { text: 'Hard Hat Detected', value: 'hardHatDetected' },
-            { text: 'Time', value: 'time' }
+            { text: 'Object Detected', value: 'objectDetected' },
+            { text: 'Score', value: 'score' },
         ],
         isLoading: true
     }),

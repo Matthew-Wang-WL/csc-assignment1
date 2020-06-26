@@ -33,13 +33,13 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="api\checker\views.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="api\logs\serializers.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="api\logs\views.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="api\slack\views.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="app\forms.py" />
@@ -54,6 +54,9 @@
     <Compile Include="ExtraTask\models.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ExtraTask\router.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="manage.py" />
     <Compile Include="ExtraTask\__init__.py" />
     <Compile Include="ExtraTask\settings.py" />
@@ -62,7 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="api\logs\" />
-    <Folder Include="api\checker\" />
+    <Folder Include="api\slack\" />
     <Folder Include="app\" />
     <Folder Include="app\migrations\" />
     <Folder Include="app\static\" />
