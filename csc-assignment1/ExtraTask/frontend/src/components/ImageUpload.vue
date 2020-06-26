@@ -11,6 +11,14 @@
             <v-btn color="primary" @click="onUpload" class="ml-8">Upload</v-btn>
         </v-container>
         <v-container class="d-flex justify-center pa-8">
+            <div
+                id="loadingDisplay"
+                class="d-flex align-center elevation-1"
+                style="display: none !important;"
+            >
+                <span id="loadingText">Detecting</span>
+                <v-img src="../assets/loading.gif"></v-img>
+            </div>
             <span id="msg" class="overline"></span>
         </v-container>
         <v-data-table
@@ -50,6 +58,10 @@ export default {
             this.url = URL.createObjectURL(file);
         },
         async onUpload() {
+            document.getElementById('msg').innerHTML = '';
+            let loader = document.getElementById('loadingDisplay');
+            loader.removeAttribute('style');
+
             if (this.url != null) {
                 const image = document.getElementById('image');
 
@@ -84,20 +96,42 @@ export default {
                         })
                             .then(response => {
                                 //success
+                                loader.setAttribute(
+                                    'style',
+                                    'display: none !important'
+                                );
+
                                 console.log(response);
-                                document.getElementById('msg').innerHTML = 'Results were uploaded. View them in your slack workspace or in the table below.'
-                                document.getElementById('msg').classList.add("green--text")
-                                document.getElementById('msg').classList.remove("red--text")
+                                document.getElementById('msg').innerHTML =
+                                    'Results were uploaded. View them in your slack workspace or in the table below.';
+                                document
+                                    .getElementById('msg')
+                                    .classList.add('green--text');
+                                document
+                                    .getElementById('msg')
+                                    .classList.remove('red--text');
+                                this.fetchRecords();
                             })
                             .catch(response => {
+                                loader.setAttribute(
+                                    'style',
+                                    'display: none !important'
+                                );
+
                                 //error
                                 console.log(response);
-                                document.getElementById('msg').innerHTML = 'Error has occured. Failed to upload results.';
-                                document.getElementById('msg').classList.remove("green--text")
-                                document.getElementById('msg').classList.add("red--text")
+                                document.getElementById('msg').innerHTML =
+                                    'Error has occured. Failed to upload results.';
+                                document
+                                    .getElementById('msg')
+                                    .classList.remove('green--text');
+                                document
+                                    .getElementById('msg')
+                                    .classList.add('red--text');
                             });
                     });
             } else {
+                loader.setAttribute('style', 'display: none !important');
                 //display error message
             }
         },
@@ -135,5 +169,12 @@ export default {
     top: 0;
     width: 100%;
     height: 100%;
+}
+
+#loadingDisplay {
+    padding: 0 20px;
+}
+.v-image {
+    width: 50px;
 }
 </style>

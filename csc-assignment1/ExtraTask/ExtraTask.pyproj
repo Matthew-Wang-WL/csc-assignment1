@@ -95,6 +95,7 @@
     <Content Include="frontend\public\index.html" />
     <Content Include="frontend\README.md" />
     <Content Include="frontend\src\App.vue" />
+    <Content Include="frontend\src\assets\loading.gif" />
     <Content Include="frontend\src\assets\logo.png" />
     <Content Include="frontend\src\components\ImageUpload.vue" />
     <Content Include="frontend\src\main.js" />
